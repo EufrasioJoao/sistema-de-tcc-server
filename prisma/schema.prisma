@@ -1,0 +1,260 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+
+
+enum UserRoles {
+  ADMIN
+  SISTEM_MANAGER
+  COURSE_COORDENATOR
+  ACADEMIC_REGISTER
+}
+
+enum FileType {
+  PDF
+  SPREADSHEET
+  DOCUMENT
+}
+
+enum AccessHistoryAction {
+  VIEW_FILE
+  VIEW_FOLDER 
+  DOWNLOAD_FILE
+  EDIT_FILE
+  EDIT_FOLDER
+  MOVE_FILE
+  MOVE_FOLDER
+  UPLOAD_FILE
+  CREATE_FOLDER
+}
+
+enum TccType {
+  BACHELOR
+  MASTER
+  DOCTORATE
+}
+
+enum PermissionAccessLevel {
+  VIEW_ONLY
+  DOWNLOAD
+  VIEW_AND_DOWNLOAD
+  UPLOAD
+  MANAGE
+  NO_ACCESS
+}
+
+
+
+
+model User {
+  id             String                     @id @default(uuid())
+  first_name     String
+  last_name      String
+  email          String                  @unique 
+  phone_number   String?
+  password       String
+  role           UserRoles           @default(ADMIN)
+  is_active      Boolean                 @default(true)
+  last_login_at  DateTime?
+  created_at     DateTime                @default(now())
+  updated_at     DateTime                @updatedAt
+  deleted_at     DateTime?  
+
+  files           File[]
+  file_access_history AccessHistory[]
+  permissions         FolderPermission[]
+  supervised_tccs     TCC[]                  @relation("SupervisorTCCs")
+  coordinated_courses Course[]               @relation("CourseCoordinator")
+
+  @@map("users")
+  organization_id String
+  organization    Organization @relation(fields: [organization_id], references: [id])
+
+  @@index([organization_id])
+}
+
+
+
+model Organization {
+  id              String       @id @default(uuid())
+  name            String
+  email           String?   @unique 
+  is_active       Boolean   @default(true)
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+  deleted_at     DateTime? 
+  city            String?
+  state           String?
+  UsedStorage     Float?    @default(0)
+
+  files            File[]
+  folders          Folder[]
+  users           User[] 
+
+  @@map("organization")
+}
+
+
+
+
+model Folder {
+  id               String       @id @default(uuid())
+  name             String
+  path             String?      @db.Text
+  parent_folder_id String?
+  organization_id  String
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+  deleted_at       DateTime? 
+
+  permissions      FolderPermission[]
+  files            File[]
+  organization     Organization       @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  parent_folder    Folder?      @relation("FolderHierarchy", fields: [parent_folder_id], references: [id], onDelete: Cascade)
+  folders          Folder[]     @relation("FolderHierarchy")
+
+  @@index([organization_id], map: "organization_id_fkey")
+  @@index([parent_folder_id], map: "folders_parent_folder_id_fkey")
+
+  @@map("folders")
+  AccessHistory AccessHistory[]
+}
+
+
+
+model FolderPermission {
+  id          String         @id @default(uuid())
+  folderId    String
+  userId      String?
+  accessLevel PermissionAccessLevel
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  folder      Folder      @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  user        User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([folderId, userId])
+  @@index([folderId])
+  @@index([userId])
+  
+  @@map("folder_permissions")
+}
+
+model File {
+  id                      String                  @id @default(uuid())
+  filename                String
+  displayName             String
+  size                    String 
+  type                    FileType
+  path                    String?                 @db.Text
+  folder_id               String
+  organization_id         String
+  uploaded_by             String
+  created_at              DateTime                @default(now())
+  updated_at              DateTime                @updatedAt
+  deleted_at              DateTime? 
+  
+  access_history          AccessHistory[]
+  organization            Organization                  @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  folder                  Folder                  @relation(fields: [folder_id], references: [id])
+  uploader                User               @relation(fields: [uploaded_by], references: [id])
+  tcc                     TCC?                    @relation("TCCFile")
+  defenseRecordForTcc     TCC?                    @relation("DefenseRecordFile")
+
+  @@index([organization_id], map: "organization_id_fkey")
+  @@index([folder_id], map: "files_folder_id_fkey")
+  @@index([uploaded_by], map: "files_uploaded_by_fkey")
+  @@map("files")
+}
+
+
+
+model AccessHistory {
+  id               String    @id @default(uuid())
+  accessed_by      String
+  file_id          String?
+  folder_id        String?
+  accessed_at      DateTime?
+  action_performed AccessHistoryAction
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+  
+  user             User     @relation(fields: [accessed_by], references: [id], onDelete: Cascade)
+  file             File?      @relation(fields: [file_id], references: [id], onDelete: Cascade)
+  folder           Folder?    @relation(fields: [folder_id], references: [id], onDelete: Cascade)
+
+  @@index([accessed_by], map: "access_history_accessed_by_fkey")
+  @@index([file_id], map: "access_history_file_id_fkey")
+  @@index([folder_id], map: "access_history_folder_id_fkey")
+  @@map("access_history")
+}
+
+model Course {
+  id            String    @id @default(uuid())
+  name          String
+  coordinatorId String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime? 
+
+  coordinator User?     @relation("CourseCoordinator", fields: [coordinatorId], references: [id])
+  students    Student[]
+  tccs        TCC[]
+
+  @@index([coordinatorId])
+  @@map("courses")
+}
+
+model Student {
+  id            String    @id @default(uuid())
+  firstName     String
+  lastName      String
+  email         String    @unique
+  studentNumber String    @unique
+  courseId      String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime? 
+
+  course Course @relation(fields: [courseId], references: [id])
+  tccs   TCC[]
+
+  @@index([courseId])
+  @@map("students")
+}
+
+model TCC {
+  id                   String    @id @default(uuid())
+  title                String
+  year                 Int
+  keywords             String?
+  type                 TccType
+  authorId             String
+  supervisorId         String
+  courseId             String
+  fileId               String    @unique
+  defenseRecordFileId  String?   @unique
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  deletedAt            DateTime? 
+
+  author              Student @relation(fields: [authorId], references: [id])
+  supervisor          User    @relation("SupervisorTCCs", fields: [supervisorId], references: [id])
+  course              Course  @relation(fields: [courseId], references: [id])
+  file                File    @relation("TCCFile", fields: [fileId], references: [id])
+  defenseRecordFile   File?   @relation("DefenseRecordFile", fields: [defenseRecordFileId], references: [id])
+
+  @@index([authorId])
+  @@index([supervisorId])
+  @@index([courseId])
+  @@map("tccs")
+}
+
+
+
