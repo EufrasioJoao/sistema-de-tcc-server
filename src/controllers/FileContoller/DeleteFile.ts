@@ -37,7 +37,7 @@ export async function deleteFile(req: Request, res: Response): Promise<void> {
         // Delete related records first to avoid foreign key constraint violations
 
         // Delete access history associated with the file
-        await prisma.fileAccessHistory.deleteMany({
+        await prisma.accessHistory.deleteMany({
           where: { file_id: file.id },
         });
 

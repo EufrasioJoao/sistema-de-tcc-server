@@ -4,7 +4,10 @@ import { AuthRequest } from "../middlewares/authMiddleware";
 import { registerUser } from "./UserController";
 
 // Get all courses
-export async function getAllCourses(req: AuthRequest, res: Response) {
+export async function getAllCourses(
+  req: AuthRequest,
+  res: Response
+): Promise<void> {
   try {
     const requestingUser = req.user;
 
@@ -13,6 +16,7 @@ export async function getAllCourses(req: AuthRequest, res: Response) {
         success: false,
         message: "Usuário não autenticado",
       });
+      return;
     }
 
     const user = await db.user.findUnique({
@@ -56,14 +60,14 @@ export async function getAllCourses(req: AuthRequest, res: Response) {
       },
     });
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       message: "Cursos recuperados com sucesso",
       courses,
     });
   } catch (error) {
     console.error("Error fetching courses:", error);
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       message: "Erro interno do servidor",
     });
@@ -94,7 +98,7 @@ export async function getCourseById(
     });
 
     const course = await db.course.findFirst({
-      where: { 
+      where: {
         id,
         coordinator: {
           organization_id: user?.organization_id,
@@ -188,7 +192,10 @@ export async function getCourseById(
 }
 
 // Create a new course
-export async function createCourse(req: AuthRequest, res: Response) {
+export async function createCourse(
+  req: AuthRequest,
+  res: Response
+): Promise<void> {
   const { name, coordinatorId } = req.body;
   const requestingUser = req.user;
 
@@ -235,7 +242,10 @@ export async function createCourse(req: AuthRequest, res: Response) {
 }
 
 // Update a course
-export async function updateCourse(req: AuthRequest, res: Response) {
+export async function updateCourse(
+  req: AuthRequest,
+  res: Response
+): Promise<void> {
   const { id } = req.params;
   const { name, coordinatorId } = req.body;
   const requestingUser = req.user;
@@ -284,7 +294,10 @@ export async function updateCourse(req: AuthRequest, res: Response) {
 }
 
 // Delete a course
-export async function deleteCourse(req: AuthRequest, res: Response) {
+export async function deleteCourse(
+  req: AuthRequest,
+  res: Response
+): Promise<void> {
   const { id } = req.params;
   const requestingUser = req.user;
 
