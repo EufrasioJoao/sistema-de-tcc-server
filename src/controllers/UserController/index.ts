@@ -12,7 +12,5 @@ export * from "./ResetPasswordWithCode";
 export * from "./GetDashboardData";
 export * from "./GetAllUsersWithDetails";
 export * from "./GetUserByIdWithDetails";
-export * from "./CreateOrUpdatePermission";
-export * from "./GetFolderOrFilePermission";
 export * from "./SendResetCode";
 export * from "./SignUp";

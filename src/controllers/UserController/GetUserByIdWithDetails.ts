@@ -47,15 +47,10 @@ export async function getUserByIdWithDetails(
 
           switch (item.action_performed) {
             case "VIEW_FILE":
-            case "VIEW_FOLDER":
-              acc[date].views++;
-              break;
             case "DOWNLOAD_FILE":
               acc[date].downloads++;
               break;
             case "EDIT_FILE":
-            case "EDIT_FOLDER":
-              acc[date].edits++;
               break;
           }
         }

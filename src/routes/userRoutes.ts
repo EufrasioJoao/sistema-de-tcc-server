@@ -8,8 +8,6 @@ import {
   getDashboardData,
   getUserById,
   getUserByIdWithDetails,
-  getFolderOrFilePermission,
-  CreateOrUpdatePermission,
   updateUser,
   searchUser,
   loginUser,
@@ -35,17 +33,7 @@ router.get("/", authMiddleware, getAllUsers);
 
 router.get("/search/:searchTerm", authMiddleware, searchUser);
 
-router.get(
-  "/get-folder-or-file-permission",
-  authMiddleware,
-  getFolderOrFilePermission
-);
 
-router.post(
-  "/create-or-update-permission",
-  authMiddleware,
-  CreateOrUpdatePermission
-);
 
 router.post("/history", authMiddleware, getAllUsersWithDetails);
 

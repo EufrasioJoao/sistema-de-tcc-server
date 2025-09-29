@@ -24,14 +24,9 @@ enum FileType {
 
 enum AccessHistoryAction {
   VIEW_FILE
-  VIEW_FOLDER 
   DOWNLOAD_FILE
   EDIT_FILE
-  EDIT_FOLDER
-  MOVE_FILE
-  MOVE_FOLDER
   UPLOAD_FILE
-  CREATE_FOLDER
 }
 
 enum TccType {
@@ -40,14 +35,6 @@ enum TccType {
   DOCTORATE
 }
 
-enum PermissionAccessLevel {
-  VIEW_ONLY
-  DOWNLOAD
-  VIEW_AND_DOWNLOAD
-  UPLOAD
-  MANAGE
-  NO_ACCESS
-}
 
 
 
@@ -68,9 +55,9 @@ model User {
 
   files           File[]
   file_access_history AccessHistory[]
-  permissions         FolderPermission[]
   supervised_tccs     TCC[]                  @relation("SupervisorTCCs")
   coordinated_courses Course[]               @relation("CourseCoordinator")
+  search_history      SearchHistory[]        @relation("UserSearchHistory")
 
   @@map("users")
   organization_id String
@@ -94,7 +81,6 @@ model Organization {
   UsedStorage     Float?    @default(0)
 
   files            File[]
-  folders          Folder[]
   users           User[] 
 
   @@map("organization")
@@ -103,48 +89,9 @@ model Organization {
 
 
 
-model Folder {
-  id               String       @id @default(uuid())
-  name             String
-  path             String?      @db.Text
-  parent_folder_id String?
-  organization_id  String
-  created_at       DateTime     @default(now())
-  updated_at       DateTime     @updatedAt
-  deleted_at       DateTime? 
-
-  permissions      FolderPermission[]
-  files            File[]
-  organization     Organization       @relation(fields: [organization_id], references: [id], onDelete: Cascade)
-  parent_folder    Folder?      @relation("FolderHierarchy", fields: [parent_folder_id], references: [id], onDelete: Cascade)
-  folders          Folder[]     @relation("FolderHierarchy")
-
-  @@index([organization_id], map: "organization_id_fkey")
-  @@index([parent_folder_id], map: "folders_parent_folder_id_fkey")
-
-  @@map("folders")
-  AccessHistory AccessHistory[]
-}
 
 
 
-model FolderPermission {
-  id          String         @id @default(uuid())
-  folderId    String
-  userId      String?
-  accessLevel PermissionAccessLevel
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-
-  folder      Folder      @relation(fields: [folderId], references: [id], onDelete: Cascade)
-  user        User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([folderId, userId])
-  @@index([folderId])
-  @@index([userId])
-  
-  @@map("folder_permissions")
-}
 
 model File {
   id                      String                  @id @default(uuid())
@@ -153,7 +100,6 @@ model File {
   size                    String 
   type                    FileType
   path                    String?                 @db.Text
-  folder_id               String
   organization_id         String
   uploaded_by             String
   created_at              DateTime                @default(now())
@@ -162,13 +108,11 @@ model File {
   
   access_history          AccessHistory[]
   organization            Organization                  @relation(fields: [organization_id], references: [id], onDelete: Cascade)
-  folder                  Folder                  @relation(fields: [folder_id], references: [id])
   uploader                User               @relation(fields: [uploaded_by], references: [id])
   tcc                     TCC?                    @relation("TCCFile")
   defenseRecordForTcc     TCC?                    @relation("DefenseRecordFile")
 
   @@index([organization_id], map: "organization_id_fkey")
-  @@index([folder_id], map: "files_folder_id_fkey")
   @@index([uploaded_by], map: "files_uploaded_by_fkey")
   @@map("files")
 }
@@ -179,7 +123,6 @@ model AccessHistory {
   id               String    @id @default(uuid())
   accessed_by      String
   file_id          String?
-  folder_id        String?
   accessed_at      DateTime?
   action_performed AccessHistoryAction
   created_at       DateTime  @default(now())
@@ -187,11 +130,9 @@ model AccessHistory {
   
   user             User     @relation(fields: [accessed_by], references: [id], onDelete: Cascade)
   file             File?      @relation(fields: [file_id], references: [id], onDelete: Cascade)
-  folder           Folder?    @relation(fields: [folder_id], references: [id], onDelete: Cascade)
 
   @@index([accessed_by], map: "access_history_accessed_by_fkey")
   @@index([file_id], map: "access_history_file_id_fkey")
-  @@index([folder_id], map: "access_history_folder_id_fkey")
   @@map("access_history")
 }
 
@@ -254,6 +195,20 @@ model TCC {
   @@index([supervisorId])
   @@index([courseId])
   @@map("tccs")
+}
+
+model SearchHistory {
+  id           String   @id @default(uuid())
+  query        String
+  userId       String
+  resultsCount Int
+  createdAt    DateTime @default(now())
+
+  user User @relation("UserSearchHistory", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("search_history")
 }
 
 

@@ -2,10 +2,10 @@ import { Router } from "express";
 
 import organizationRoutes from "./organizationRoutes";
 import userRoutes from "./userRoutes";
-import folderRoutes from "./folderRoutes";
-import fileRoutes from "./fileRoutes";
 import courseRoutes from "./courseRoutes";
 import studentRoutes from "./studentRoutes";
+import tccRoutes from "./tccRoutes";
+import auditRoutes from "./auditRoutes";
 
 const router = Router();
 
@@ -13,7 +13,7 @@ router.use("/api/organizations", organizationRoutes);
 router.use("/api/users", userRoutes);
 router.use("/api/courses", courseRoutes);
 router.use("/api/students", studentRoutes);
-router.use("/api/folders", folderRoutes);
-router.use("/api/files", fileRoutes);
+router.use("/api/tccs", tccRoutes);
+router.use("/api/audit", auditRoutes);
 
 export default router;

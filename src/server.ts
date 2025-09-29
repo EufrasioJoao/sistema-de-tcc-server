@@ -2,20 +2,16 @@ import express from "express";
 import cors from "cors";
 import fileUpload from "express-fileupload";
 import path from "path";
-import swaggerUi from "swagger-ui-express";
-import swaggerDocument from "./swagger.json";
 import morgan from "morgan";
 import dotenv from "dotenv";
-
-import "./cronJobs";
-
+import env from "./config/env";
 import serverRoutes from "./routes";
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = env.PORT;
 
 app.use("/.well-known", express.static(path.join(__dirname, ".well-known")));
 
@@ -38,7 +34,6 @@ app.use(cors(corsOptions));
 app.use(morgan("dev"));
 app.use(express.json({ limit: "100mb" }));
 app.use(fileUpload());
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use(serverRoutes);
 
 app.get("/api/health", (req, res) => {
@@ -46,7 +41,7 @@ app.get("/api/health", (req, res) => {
 });
 
 app.get("/", (req, res) => {
-  res.send("SERVICE: ARQUIVAR OPERATOR APP");
+  res.send("Rest API do Sistema de Gestão de TCCs");
 });
 
 app.listen(PORT, () => {

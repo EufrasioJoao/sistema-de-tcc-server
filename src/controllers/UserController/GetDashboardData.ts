@@ -1,78 +1,268 @@
 import { Request, Response } from "express";
 import { db } from "../../lib/db";
+import { UserRoles, TccType } from "@prisma/client";
+import { AuthRequest } from "@/middlewares/authMiddleware";
 
-export async function getDashboardData(req: Request, res: Response): Promise<void> {
+export async function getDashboardData(
+  req: AuthRequest,
+  res: Response
+): Promise<void> {
   try {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({
+        success: false,
+        message: "Usuário não autenticado",
+      });
+      return;
+    }
+
     const currentMonth = new Date().getMonth() + 1;
     const currentYear = new Date().getFullYear();
-
-    // Fetch total count of organizations and users
-    const totalOrganizations = await db.organization.count();
-    const totalUsers = await db.user.count();
-
-    // Fetch activity data for this month using Prisma's query API
     const startDate = new Date(currentYear, currentMonth - 1, 1);
     const endDate = new Date(currentYear, currentMonth, 1);
 
-    // Fetch files and folders created this month
-    const filesCreated = await db.file.findMany({
-      where: {
-        created_at: {
-          gte: startDate,
-          lt: endDate,
-        },
-      },
+    // Get user's organization
+    const userWithOrg = await db.user.findUnique({
+      where: { id: user.id },
       select: {
-        created_at: true,
+        organization_id: true,
+        role: true,
+        organization: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 
-    const foldersCreated = await db.folder.findMany({
-      where: {
-        created_at: {
-          gte: startDate,
-          lt: endDate,
-        },
-      },
-      select: {
-        created_at: true,
-      },
-    });
+    if (!userWithOrg) {
+      res.status(404).json({
+        success: false,
+        message: "Usuário não encontrado",
+      });
+      return;
+    }
 
-    // Define the type for the accumulator object
-    type ActivityAcc = Record<
+    const organizationId = userWithOrg.organization_id;
+    const isSystemAdmin =
+      userWithOrg.role === UserRoles.ADMIN ||
+      userWithOrg.role === UserRoles.SISTEM_MANAGER;
+
+    // Base filters for organization-specific data
+    const userOrgFilter = isSystemAdmin
+      ? undefined
+      : { organization_id: organizationId };
+    const courseOrgFilter = isSystemAdmin
+      ? undefined
+      : {
+          coordinator: {
+            organization_id: organizationId,
+          },
+        };
+    const tccOrgFilter = isSystemAdmin
+      ? undefined
+      : {
+          author: {
+            course: {
+              coordinator: {
+                organization_id: organizationId,
+              },
+            },
+          },
+        };
+
+    // Fetch organizational metrics
+    const [
+      totalUsers,
+      totalTccs,
+      totalFiles,
+      totalCourses,
+      usersByRole,
+      tccsByType,
+      monthlyTccStats,
+      topCourses,
+      allCourses,
+    ] = await Promise.all([
+      // Total users in organization
+      db.user.count({
+        where: userOrgFilter,
+      }),
+
+      // Total TCCs
+      db.tCC.count({
+        where: tccOrgFilter,
+      }),
+
+      // Total files
+      db.file.count({
+        where: {
+          ...userOrgFilter,
+          deleted_at: null,
+        },
+      }),
+
+      // Total courses
+      db.course.count({
+        where: courseOrgFilter,
+      }),
+
+      // Users by role
+      db.user.groupBy({
+        by: ["role"],
+        where: userOrgFilter,
+        _count: {
+          id: true,
+        },
+      }),
+
+      // TCCs by type
+      db.tCC.groupBy({
+        by: ["type"],
+        where: tccOrgFilter,
+        _count: {
+          id: true,
+        },
+      }),
+
+      // Monthly TCC creation stats
+      db.tCC.findMany({
+        where: {
+          ...tccOrgFilter,
+          createdAt: {
+            gte: startDate,
+            lt: endDate,
+          },
+        },
+        select: {
+          createdAt: true,
+          type: true,
+        },
+      }),
+
+      // Top courses by TCC count
+      db.course.findMany({
+        where: courseOrgFilter,
+        include: {
+          _count: {
+            select: {
+              tccs: true,
+            },
+          },
+        },
+        orderBy: {
+          tccs: {
+            _count: "desc",
+          },
+        },
+        take: 5,
+      }),
+
+      // All courses with detailed information
+      db.course.findMany({
+        where: courseOrgFilter,
+        include: {
+          coordinator: {
+            select: {
+              id: true,
+              first_name: true,
+              last_name: true,
+              email: true,
+            },
+          },
+          _count: {
+            select: {
+              students: true,
+              tccs: true,
+            },
+          },
+        },
+        orderBy: {
+          name: "asc",
+        },
+      }),
+    ]);
+
+    // Process monthly TCC data
+    const monthlyTccMap: Record<
       string,
-      { date: string; foldersCreated: number; filesCreated: number }
-    >;
+      { date: string; bachelor: number; master: number; doctorate: number }
+    > = {};
 
-    const activityMap: ActivityAcc = {};
+    monthlyTccStats.forEach((tcc: { createdAt: Date; type: TccType }) => {
+      const date = tcc.createdAt.toISOString().split("T")[0];
+      if (!monthlyTccMap[date]) {
+        monthlyTccMap[date] = { date, bachelor: 0, master: 0, doctorate: 0 };
+      }
 
-    filesCreated.forEach(file => {
-        const date = file.created_at.toISOString().split("T")[0];
-        if (!activityMap[date]) {
-            activityMap[date] = { date, foldersCreated: 0, filesCreated: 0 };
-        }
-        activityMap[date].filesCreated++;
+      switch (tcc.type) {
+        case TccType.BACHELOR:
+          monthlyTccMap[date].bachelor++;
+          break;
+        case TccType.MASTER:
+          monthlyTccMap[date].master++;
+          break;
+        case TccType.DOCTORATE:
+          monthlyTccMap[date].doctorate++;
+          break;
+      }
     });
 
-    foldersCreated.forEach(folder => {
-        const date = folder.created_at.toISOString().split("T")[0];
-        if (!activityMap[date]) {
-            activityMap[date] = { date, foldersCreated: 0, filesCreated: 0 };
-        }
-        activityMap[date].foldersCreated++;
-    });
+    const monthlyTccData = Object.values(monthlyTccMap);
 
-    const activityData = Object.values(activityMap);
+    // Format role distribution
+    const roleDistribution = usersByRole.map(
+      (role: { role: UserRoles; _count: { id: number } }) => ({
+        role: role.role,
+        count: role._count.id,
+        label:
+          {
+            [UserRoles.ADMIN]: "Administrador",
+            [UserRoles.SISTEM_MANAGER]: "Gerente do Sistema",
+            [UserRoles.COURSE_COORDENATOR]: "Coordenador de Curso",
+            [UserRoles.ACADEMIC_REGISTER]: "Registro Acadêmico",
+          }[role.role] || role.role,
+      })
+    );
+
+    // Format TCC type distribution
+    const tccTypeDistribution = tccsByType.map(
+      (type: { type: TccType; _count: { id: number } }) => ({
+        type: type.type,
+        count: type._count.id,
+        label:
+          {
+            [TccType.BACHELOR]: "Graduação",
+            [TccType.MASTER]: "Mestrado",
+            [TccType.DOCTORATE]: "Doutorado",
+          }[type.type] || type.type,
+      })
+    );
 
     const responseData = {
-      card_data: {
-        total_organizations: totalOrganizations,
+      organization: userWithOrg.organization,
+      overview: {
         total_users: totalUsers,
+        total_tccs: totalTccs,
+        total_files: totalFiles,
+        total_courses: totalCourses,
       },
-      activity_data: {
-        activity_of_this_month: activityData,
+      distributions: {
+        users_by_role: roleDistribution,
+        tccs_by_type: tccTypeDistribution,
       },
+      trends: {
+        monthly_tccs: monthlyTccData,
+      },
+      top_courses: topCourses.map(
+        (course: { id: string; name: string; _count: { tccs: number } }) => ({
+          id: course.id,
+          name: course.name,
+          tcc_count: course._count.tccs,
+        })
+      ),
+      courses: allCourses,
     };
 
     res.status(200).json({
@@ -81,7 +271,7 @@ export async function getDashboardData(req: Request, res: Response): Promise<voi
       data: responseData,
     });
   } catch (error) {
-    console.error("Error fetching dashboard data:", error); // For debugging
+    console.error("Error fetching dashboard data:", error);
     res.status(500).json({
       success: false,
       message: "Error fetching dashboard data",

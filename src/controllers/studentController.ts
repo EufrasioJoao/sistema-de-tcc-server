@@ -3,7 +3,10 @@ import { Response } from "express";
 import { AuthRequest } from "../middlewares/authMiddleware";
 
 // Get all students
-export async function getAllStudents(req: AuthRequest, res: Response): Promise<void> {
+export async function getAllStudents(
+  req: AuthRequest,
+  res: Response
+): Promise<void> {
   try {
     const requestingUser = req.user;
 
@@ -89,7 +92,7 @@ export async function getStudentById(
     });
 
     const student = await db.student.findFirst({
-      where: { 
+      where: {
         id,
         course: {
           coordinator: {
@@ -155,7 +158,10 @@ export async function getStudentById(
 }
 
 // Create a new student
-export async function createStudent(req: AuthRequest, res: Response): Promise<void> {
+export async function createStudent(
+  req: AuthRequest,
+  res: Response
+): Promise<void> {
   const { firstName, lastName, email, studentNumber, courseId } = req.body;
   const requestingUser = req.user;
 
@@ -196,16 +202,14 @@ export async function createStudent(req: AuthRequest, res: Response): Promise<vo
     // Check if email or student number already exists
     const existingStudent = await db.student.findFirst({
       where: {
-        OR: [
-          { email },
-          { studentNumber },
-        ],
+        OR: [{ email }, { studentNumber }],
         deletedAt: null,
       },
     });
 
     if (existingStudent) {
-      const field = existingStudent.email === email ? "email" : "matrícula";
+      const field =
+        existingStudent.email === email ? "email" : "Codigo de Estudante";
       res.status(400).json({
         success: false,
         message: `Já existe um estudante com este ${field}`,
@@ -256,7 +260,10 @@ export async function createStudent(req: AuthRequest, res: Response): Promise<vo
 }
 
 // Update a student
-export async function updateStudent(req: AuthRequest, res: Response): Promise<void> {
+export async function updateStudent(
+  req: AuthRequest,
+  res: Response
+): Promise<void> {
   const { id } = req.params;
   const { firstName, lastName, email, studentNumber, courseId } = req.body;
   const requestingUser = req.user;
@@ -319,17 +326,15 @@ export async function updateStudent(req: AuthRequest, res: Response): Promise<vo
     // Check if email or student number already exists (excluding current student)
     const duplicateStudent = await db.student.findFirst({
       where: {
-        OR: [
-          { email },
-          { studentNumber },
-        ],
+        OR: [{ email }, { studentNumber }],
         NOT: { id },
         deletedAt: null,
       },
     });
 
     if (duplicateStudent) {
-      const field = duplicateStudent.email === email ? "email" : "matrícula";
+      const field =
+        duplicateStudent.email === email ? "email" : "Codigo de Estudante";
       res.status(400).json({
         success: false,
         message: `Já existe outro estudante com este ${field}`,
@@ -381,7 +386,10 @@ export async function updateStudent(req: AuthRequest, res: Response): Promise<vo
 }
 
 // Delete a student (soft delete)
-export async function deleteStudent(req: AuthRequest, res: Response): Promise<void> {
+export async function deleteStudent(
+  req: AuthRequest,
+  res: Response
+): Promise<void> {
   const { id } = req.params;
   const requestingUser = req.user;
 
