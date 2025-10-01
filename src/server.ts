@@ -18,7 +18,7 @@ app.use("/.well-known", express.static(path.join(__dirname, ".well-known")));
 // CORS Configuration
 const corsOptions = {
   origin: "*",
-  credentials: true,
+  credentials: false,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: [
     "Content-Type",
