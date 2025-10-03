@@ -6,6 +6,7 @@ import courseRoutes from "./courseRoutes";
 import studentRoutes from "./studentRoutes";
 import tccRoutes from "./tccRoutes";
 import auditRoutes from "./auditRoutes";
+import reportsRoutes from "./reportsRoutes";
 
 const router = Router();
 
@@ -15,5 +16,6 @@ router.use("/api/courses", courseRoutes);
 router.use("/api/students", studentRoutes);
 router.use("/api/tccs", tccRoutes);
 router.use("/api/audit", auditRoutes);
+router.use("/api/reports", reportsRoutes);
 
 export default router;

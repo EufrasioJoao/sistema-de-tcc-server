@@ -423,23 +423,6 @@ export async function getTCCChartsStatistics(
     const currentYear = new Date().getFullYear();
     const fiveYearsAgo = currentYear - 4;
 
-    const tccsByYear = await db.tCC.groupBy({
-      by: ["year"],
-      where: {
-        ...whereClause,
-        year: {
-          gte: fiveYearsAgo,
-          lte: currentYear,
-        },
-      },
-      _count: {
-        id: true,
-      },
-      orderBy: {
-        year: "asc",
-      },
-    });
-
     // Get monthly data for current year
     const monthlyData = await db.tCC.findMany({
       where: {
@@ -452,22 +435,50 @@ export async function getTCCChartsStatistics(
       },
     });
 
-    // Process monthly data
-    const monthlyStats = Array.from({ length: 12 }, (_, i) => ({
-      month: i + 1,
-      monthName: new Date(2024, i).toLocaleDateString("pt-BR", {
-        month: "long",
-      }),
-      total: 0,
-      BACHELOR: 0,
-      MASTER: 0,
-      DOCTORATE: 0,
-    }));
 
-    monthlyData.forEach((tcc) => {
-      const month = tcc.createdAt.getMonth();
-      monthlyStats[month].total++;
-      monthlyStats[month][tcc.type as keyof (typeof monthlyStats)[0]]++;
+
+    // Area Chart Data: Daily TCC registrations over the last 90 days (3 months) up to today
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    
+    const ninetyDaysAgo = new Date(today);
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 89); // 90 days including today
+    ninetyDaysAgo.setHours(0, 0, 0, 0);
+
+    const areaChartData = Array.from({ length: 90 }, (_, i) => {
+      const date = new Date(ninetyDaysAgo);
+      date.setDate(date.getDate() + i);
+      return {
+        date: date.toISOString().split('T')[0],
+        tccs: 0,
+      };
+    });
+
+    // Fetch TCCs from the last 90 days
+    const recentTccs = await db.tCC.findMany({
+      where: {
+        ...whereClause,
+        createdAt: {
+          gte: ninetyDaysAgo,
+          lte: today,
+        },
+      },
+      select: {
+        createdAt: true,
+      },
+    });
+
+    recentTccs.forEach((tcc) => {
+      const tccCreationDate = new Date(tcc.createdAt);
+      tccCreationDate.setHours(0, 0, 0, 0);
+      
+      if (tccCreationDate >= ninetyDaysAgo && tccCreationDate <= today) {
+        const dateStr = tccCreationDate.toISOString().split('T')[0];
+        const dayData = areaChartData.find((d) => d.date === dateStr);
+        if (dayData) {
+          dayData.tccs++;
+        }
+      }
     });
 
     res.json({
@@ -477,11 +488,7 @@ export async function getTCCChartsStatistics(
           type: item.type,
           count: item._count.id,
         })),
-        byYear: tccsByYear.map((item) => ({
-          year: item.year,
-          count: item._count.id,
-        })),
-        monthly: monthlyStats,
+        areaChartData: areaChartData,
       },
     });
   } catch (error) {

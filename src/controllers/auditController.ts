@@ -162,9 +162,18 @@ export async function getAuditStatistics(
       daysNum
     );
 
+    // Get time series data for charts
+    const timeSeriesData = await AuditService.getAuditTimeSeriesData(
+      user.organization_id,
+      daysNum
+    );
+
     res.json({
       success: true,
-      data: statistics,
+      data: {
+        ...statistics,
+        timeSeriesData,
+      },
     });
   } catch (error) {
     console.error("Error fetching audit statistics:", error);
@@ -208,8 +217,8 @@ export async function getUserAuditLogs(
     }
 
     // Check if requesting user can view this user's audit logs
-    const canViewUserAudit = 
-      user.role === UserRoles.ADMIN || 
+    const canViewUserAudit =
+      user.role === UserRoles.ADMIN ||
       user.role === UserRoles.SISTEM_MANAGER ||
       requestingUser.id === userId; // Users can view their own logs
 

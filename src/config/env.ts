@@ -11,7 +11,7 @@ const envSchema = z.object({
   PORT: z
     .string()
     .transform((val) => parseInt(val, 10))
-    .default("4000"),
+    .default("4400"),
 
   // Database
   DATABASE_URL: z.string(),

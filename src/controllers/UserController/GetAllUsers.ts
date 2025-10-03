@@ -21,15 +21,63 @@ export async function getAllUsers(
 
     const organizationId = requestingUser.organization_id;
 
-    const users = await db.user.findMany({
+    // Extract query parameters
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const search = (req.query.search as string) || "";
+    const role = (req.query.role as string) || "";
+    const status = (req.query.status as string) || "";
+
+    const skip = (page - 1) * limit;
+
+    // Build where clause
+    const whereClause: any = {
+      deleted_at: null,
+      organization_id: organizationId,
+    };
+
+    // Add search conditions
+    if (search) {
+      whereClause.OR = [
+        { first_name: { contains: search, } },
+        { last_name: { contains: search, } },
+        { email: { contains: search, } },
+      ];
+    }
+
+    // Add role filter
+    if (role) {
+      whereClause.role = role;
+    }
+
+    // Add status filter
+    if (status === "active") {
+      whereClause.is_active = true;
+    } else if (status === "inactive") {
+      whereClause.is_active = false;
+    }
+
+    // Get users with pagination
+    const [users, totalCount] = await Promise.all([
+      db.user.findMany({
+        where: whereClause,
+        skip,
+        take: limit,
+        orderBy: { created_at: "desc" },
+      }),
+      db.user.count({ where: whereClause }),
+    ]);
+
+    // Get all users for stats (without pagination)
+    const allUsers = await db.user.findMany({
       where: {
         deleted_at: null,
         organization_id: organizationId,
       },
     });
 
-    const totalUsers = users.length;
-    const activeUsers = users.filter((user) => user.is_active).length;
+    const totalUsers = allUsers.length;
+    const activeUsers = allUsers.filter((user) => user.is_active).length;
     const inactiveUsers = totalUsers - activeUsers;
 
     const rolesTranslation: Record<string, string> = {
@@ -48,7 +96,7 @@ export async function getAllUsers(
       {} as Record<string, number>
     );
 
-    users.forEach((user) => {
+    allUsers.forEach((user) => {
       if (user.role && rolesCount.hasOwnProperty(user.role)) {
         rolesCount[user.role]++;
       }
@@ -61,50 +109,61 @@ export async function getAllUsers(
         total,
       }));
 
-    // Line Chart Data: User registrations over the last 6 months
-    const lineChartData = Array.from({ length: 6 }, (_, i) => {
-      const d = new Date();
-      d.setMonth(d.getMonth() - i);
-      const monthName = d.toLocaleString("pt-BR", { month: "long" });
+
+
+
+
+    // Area Chart Data: Daily user registrations over the last 90 days (3 months) up to today
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+
+    const ninetyDaysAgo = new Date(today);
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 89); // 90 days including today
+    ninetyDaysAgo.setHours(0, 0, 0, 0);
+
+    const areaChartData = Array.from({ length: 90 }, (_, i) => {
+      const date = new Date(ninetyDaysAgo);
+      date.setDate(date.getDate() + i);
       return {
-        month: monthName.charAt(0).toUpperCase() + monthName.slice(1),
-        users: 0,
+        date: date.toISOString().split('T')[0],
+        usuarios: 0,
       };
-    }).reverse();
+    });
 
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-    sixMonthsAgo.setDate(1);
-    sixMonthsAgo.setHours(0, 0, 0, 0);
-
-    users.forEach((user) => {
+    allUsers.forEach((user) => {
       const userCreationDate = new Date(user.created_at);
-      if (userCreationDate >= sixMonthsAgo) {
-        const monthName = userCreationDate.toLocaleString("pt-BR", {
-          month: "long",
-        });
-        const capitalizedMonthName =
-          monthName.charAt(0).toUpperCase() + monthName.slice(1);
-        const monthData = lineChartData.find(
-          (d) => d.month === capitalizedMonthName
-        );
-        if (monthData) {
-          monthData.users++;
+      userCreationDate.setHours(0, 0, 0, 0);
+
+      if (userCreationDate >= ninetyDaysAgo && userCreationDate <= today) {
+        const dateStr = userCreationDate.toISOString().split('T')[0];
+        const dayData = areaChartData.find((d) => d.date === dateStr);
+        if (dayData) {
+          dayData.usuarios++;
         }
       }
     });
+
+    const totalPages = Math.ceil(totalCount / limit);
 
     res.status(200).json({
       success: true,
       message: "Usuários recuperados com sucesso",
       users,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalCount,
+        limit,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
       stats: {
         totalUsers,
         activeUsers,
         inactiveUsers,
         rolesCount,
         barChartData,
-        lineChartData,
+        areaChartData,
       },
     });
   } catch (error) {

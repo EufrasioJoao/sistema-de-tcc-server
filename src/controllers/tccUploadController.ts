@@ -178,6 +178,15 @@ export async function createTCCWithUpload(
       },
     });
 
+    await db.organization.update({
+      where: { id: user.organization_id },
+      data: {
+        UsedStorage: {
+          increment: (uploadResult.tccFile.size || 0) + (uploadResult.defenseFile?.size || 0)
+        }
+      }
+    })
+
     // Log TCC upload audit
     await AuditService.logTCCUpload(requestingUser.id, uploadResult.tccFile.id, newTCC.id);
     if (uploadResult.defenseFile) {

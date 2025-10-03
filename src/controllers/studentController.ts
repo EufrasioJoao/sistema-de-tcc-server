@@ -23,41 +23,166 @@ export async function getAllStudents(
       select: { organization_id: true },
     });
 
-    const students = await db.student.findMany({
+    // Extract query parameters
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const search = (req.query.search as string) || "";
+    const sortBy = (req.query.sortBy as string) || "createdAt";
+    const sortOrder = (req.query.sortOrder as string) || "desc";
+    const courseFilter = req.query.course as string;
+
+    const skip = (page - 1) * limit;
+
+    // Build base where clause
+    const whereClause: any = {
+      deletedAt: null,
+      course: {
+        coordinator: {
+          organization_id: user?.organization_id,
+        },
+      },
+    };
+
+    // Add search filter
+    if (search) {
+      whereClause.OR = [
+        {
+          firstName: {
+            contains: search,
+          },
+        },
+        {
+          lastName: {
+            contains: search,
+          },
+        },
+        {
+          email: {
+            contains: search,
+          },
+        },
+        {
+          studentNumber: {
+            contains: search,
+          },
+        },
+        {
+          course: {
+            name: {
+              contains: search,
+            },
+          },
+        },
+      ];
+    }
+
+    // Add course filter
+    if (courseFilter) {
+      whereClause.courseId = courseFilter;
+    }
+
+    // Build orderBy clause
+    const orderBy: any = {};
+    if (sortBy === "firstName") {
+      orderBy.firstName = sortOrder;
+    } else if (sortBy === "studentNumber") {
+      orderBy.studentNumber = sortOrder;
+    } else if (sortBy === "course") {
+      orderBy.course = { name: sortOrder };
+    } else if (sortBy === "tccs") {
+      orderBy.tccs = { _count: sortOrder };
+    } else {
+      orderBy[sortBy] = sortOrder;
+    }
+
+    // Fetch students with pagination
+    const [students, total] = await Promise.all([
+      db.student.findMany({
+        where: whereClause,
+        include: {
+          course: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          _count: {
+            select: {
+              tccs: {
+                where: {
+                  deletedAt: null,
+                },
+              },
+            },
+          },
+        },
+        orderBy,
+        skip,
+        take: limit,
+      }),
+      db.student.count({ where: whereClause }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    // Area Chart Data: Daily student registrations over the last 90 days (3 months) up to today
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+
+    const ninetyDaysAgo = new Date(today);
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 89); // 90 days including today
+    ninetyDaysAgo.setHours(0, 0, 0, 0);
+
+    const areaChartData = Array.from({ length: 90 }, (_, i) => {
+      const date = new Date(ninetyDaysAgo);
+      date.setDate(date.getDate() + i);
+      return {
+        date: date.toISOString().split('T')[0],
+        students: 0,
+      };
+    });
+
+    // Get all students for chart data (not paginated)
+    const allStudents = await db.student.findMany({
       where: {
         course: {
           coordinator: {
             organization_id: user?.organization_id,
           },
         },
-        deletedAt: null, // Filter out soft deleted students
+        deletedAt: null,
       },
-      include: {
-        course: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        _count: {
-          select: {
-            tccs: {
-              where: {
-                deletedAt: null, // Only count non-deleted TCCs
-              },
-            },
-          },
-        },
+      select: {
+        createdAt: true,
       },
-      orderBy: {
-        firstName: "asc",
-      },
+    });
+
+    allStudents.forEach((student) => {
+      const studentCreationDate = new Date(student.createdAt);
+      studentCreationDate.setHours(0, 0, 0, 0);
+
+      if (studentCreationDate >= ninetyDaysAgo && studentCreationDate <= today) {
+        const dateStr = studentCreationDate.toISOString().split('T')[0];
+        const dayData = areaChartData.find((d) => d.date === dateStr);
+        if (dayData) {
+          dayData.students++;
+        }
+      }
     });
 
     res.status(200).json({
       success: true,
       message: "Estudantes recuperados com sucesso",
       students,
+      areaChartData,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
     });
   } catch (error) {
     console.error("Error fetching students:", error);

@@ -288,4 +288,70 @@ export class AuditService {
       period: `${days} dias`,
     };
   }
+
+  /**
+   * Get time series data for audit charts
+   */
+  static async getAuditTimeSeriesData(organizationId: string, days: number = 30) {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    // Get daily activity data
+    const dailyActivity = await db.$queryRaw<Array<{
+      date: string;
+      VIEW_FILE: number;
+      DOWNLOAD_FILE: number;
+      UPLOAD_FILE: number;
+      EDIT_FILE: number;
+      total: number;
+    }>>`
+      SELECT 
+        DATE(accessed_at) as date,
+        COUNT(CASE WHEN action_performed = 'VIEW_FILE' THEN 1 END) as VIEW_FILE,
+        COUNT(CASE WHEN action_performed = 'DOWNLOAD_FILE' THEN 1 END) as DOWNLOAD_FILE,
+        COUNT(CASE WHEN action_performed = 'UPLOAD_FILE' THEN 1 END) as UPLOAD_FILE,
+        COUNT(CASE WHEN action_performed = 'EDIT_FILE' THEN 1 END) as EDIT_FILE,
+        COUNT(*) as total
+      FROM access_history ah
+      JOIN users u ON ah.accessed_by = u.id
+      WHERE u.organization_id = ${organizationId}
+        AND ah.accessed_at >= ${startDate}
+      GROUP BY DATE(accessed_at)
+      ORDER BY DATE(accessed_at)
+    `;
+
+    // Get hourly activity for the last 24 hours
+    const last24Hours = new Date();
+    last24Hours.setHours(last24Hours.getHours() - 24);
+
+    const hourlyActivity = await db.$queryRaw<Array<{
+      hour: string;
+      actions: number;
+    }>>`
+      SELECT 
+        HOUR(accessed_at) as hour,
+        COUNT(*) as actions
+      FROM access_history ah
+      JOIN users u ON ah.accessed_by = u.id
+      WHERE u.organization_id = ${organizationId}
+        AND ah.accessed_at >= ${last24Hours}
+      GROUP BY HOUR(accessed_at)
+      ORDER BY HOUR(accessed_at)
+    `;
+
+    return {
+      dailyActivity: dailyActivity.map(row => ({
+        date: row.date,
+        VIEW_FILE: Number(row.VIEW_FILE),
+        DOWNLOAD_FILE: Number(row.DOWNLOAD_FILE),
+        UPLOAD_FILE: Number(row.UPLOAD_FILE),
+        EDIT_FILE: Number(row.EDIT_FILE),
+        total: Number(row.total),
+      })),
+      hourlyActivity: hourlyActivity.map(row => ({
+        hour: `${row.hour}:00`,
+        actions: Number(row.actions),
+      })),
+    };
+  }
 }

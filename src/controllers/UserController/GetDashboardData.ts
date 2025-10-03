@@ -211,6 +211,50 @@ export async function getDashboardData(
 
     const monthlyTccData = Object.values(monthlyTccMap);
 
+    // Area Chart Data: Daily TCC registrations over the last 90 days (3 months) up to today
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    
+    const ninetyDaysAgo = new Date(today);
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 89); // 90 days including today
+    ninetyDaysAgo.setHours(0, 0, 0, 0);
+
+    const tccAreaChartData = Array.from({ length: 90 }, (_, i) => {
+      const date = new Date(ninetyDaysAgo);
+      date.setDate(date.getDate() + i);
+      return {
+        date: date.toISOString().split('T')[0],
+        tccs: 0,
+      };
+    });
+
+    // Fetch TCCs from the last 90 days
+    const recentTccs = await db.tCC.findMany({
+      where: {
+        ...tccOrgFilter,
+        createdAt: {
+          gte: ninetyDaysAgo,
+          lte: today,
+        },
+      },
+      select: {
+        createdAt: true,
+      },
+    });
+
+    recentTccs.forEach((tcc) => {
+      const tccCreationDate = new Date(tcc.createdAt);
+      tccCreationDate.setHours(0, 0, 0, 0);
+      
+      if (tccCreationDate >= ninetyDaysAgo && tccCreationDate <= today) {
+        const dateStr = tccCreationDate.toISOString().split('T')[0];
+        const dayData = tccAreaChartData.find((d) => d.date === dateStr);
+        if (dayData) {
+          dayData.tccs++;
+        }
+      }
+    });
+
     // Format role distribution
     const roleDistribution = usersByRole.map(
       (role: { role: UserRoles; _count: { id: number } }) => ({
@@ -254,6 +298,7 @@ export async function getDashboardData(
       },
       trends: {
         monthly_tccs: monthlyTccData,
+        tcc_area_chart: tccAreaChartData,
       },
       top_courses: topCourses.map(
         (course: { id: string; name: string; _count: { tccs: number } }) => ({

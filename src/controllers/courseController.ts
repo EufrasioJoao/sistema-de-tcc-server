@@ -3,7 +3,6 @@ import { Response } from "express";
 import { AuthRequest } from "../middlewares/authMiddleware";
 import { registerUser } from "./UserController";
 
-// Get all courses
 export async function getAllCourses(
   req: AuthRequest,
   res: Response
@@ -24,46 +23,130 @@ export async function getAllCourses(
       select: { organization_id: true },
     });
 
-    const courses = await db.course.findMany({
-      where: {
+    // Extract query parameters
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const search = (req.query.search as string) || "";
+    const sortBy = (req.query.sortBy as string) || "createdAt";
+    const sortOrder = (req.query.sortOrder as string) || "desc";
+    const coordinatorFilter = req.query.coordinator as string;
+
+    const skip = (page - 1) * limit;
+
+    // Build base where clause
+    const whereClause: any = {
+      deletedAt: null,
+      AND: [
+        // Organization filter
+        {
+          OR: [
+            {
+              // Courses with coordinators from the same organization
+              coordinator: {
+                organization_id: user?.organization_id,
+              },
+            },
+            {
+              // Courses without coordinators (assuming they belong to all organizations)
+              coordinatorId: null,
+            },
+          ],
+        },
+      ],
+    };
+
+    // Add search filter
+    if (search) {
+      whereClause.AND.push({
+        name: {
+          contains: search,
+        },
+      });
+    }
+
+    // Add coordinator filter
+    if (coordinatorFilter === "with") {
+      // Replace the organization filter with a more specific one
+      whereClause.AND[0] = {
         coordinator: {
           organization_id: user?.organization_id,
         },
-        deletedAt: null, // Filter out soft deleted courses
-      },
-      include: {
-        coordinator: {
-          select: {
-            id: true,
-            first_name: true,
-            last_name: true,
-            email: true,
-          },
-        },
-        _count: {
-          select: {
-            students: {
-              where: {
-                deletedAt: null, // Only count non-deleted students
-              },
-            },
-            tccs: {
-              where: {
-                deletedAt: null, // Only count non-deleted TCCs
-              },
-            },
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
+      };
+    } else if (coordinatorFilter === "without") {
+      // Replace the organization filter to only show courses without coordinators
+      whereClause.AND[0] = {
+        coordinatorId: null,
+      };
+    }
+
+    // Build orderBy clause
+    const orderBy: any = {};
+    if (sortBy === "students") {
+      orderBy.students = { _count: sortOrder };
+    } else if (sortBy === "tccs") {
+      orderBy.tccs = { _count: sortOrder };
+    } else {
+      orderBy[sortBy] = sortOrder;
+    }
+
+    // Debug logging
+    console.log("Search query:", {
+      search,
+      whereClause: JSON.stringify(whereClause, null, 2),
+      orderBy,
+      page,
+      limit,
     });
+
+    // Fetch courses with pagination
+    const [courses, total] = await Promise.all([
+      db.course.findMany({
+        where: whereClause,
+        include: {
+          coordinator: {
+            select: {
+              id: true,
+              first_name: true,
+              last_name: true,
+              email: true,
+            },
+          },
+          _count: {
+            select: {
+              students: {
+                where: {
+                  deletedAt: null,
+                },
+              },
+              tccs: {
+                where: {
+                  deletedAt: null,
+                },
+              },
+            },
+          },
+        },
+        orderBy,
+        skip,
+        take: limit,
+      }),
+      db.course.count({ where: whereClause }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
 
     res.status(200).json({
       success: true,
       message: "Cursos recuperados com sucesso",
       courses,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
     });
   } catch (error) {
     console.error("Error fetching courses:", error);
