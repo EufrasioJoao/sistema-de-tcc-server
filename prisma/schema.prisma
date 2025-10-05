@@ -35,6 +35,13 @@ enum TccType {
   DOCTORATE
 }
 
+enum BackupStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
 
 
 
@@ -209,6 +216,24 @@ model SearchHistory {
   @@index([userId])
   @@index([createdAt])
   @@map("search_history")
+}
+
+model Backup {
+  id            String       @id @default(uuid())
+  filename      String
+  s3_key        String       @unique
+  s3_url        String?
+  file_size     BigInt?
+  status        BackupStatus @default(PENDING)
+  error_message String?      @db.Text
+  started_at    DateTime     @default(now())
+  completed_at  DateTime?
+  created_at    DateTime     @default(now())
+  updated_at    DateTime     @updatedAt
+
+  @@index([status])
+  @@index([started_at])
+  @@map("backups")
 }
 
 

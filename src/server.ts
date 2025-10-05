@@ -13,6 +13,9 @@ dotenv.config();
 const app = express();
 const PORT = env.PORT;
 
+
+import "./cronJobs";
+
 app.use("/.well-known", express.static(path.join(__dirname, ".well-known")));
 
 // CORS Configuration

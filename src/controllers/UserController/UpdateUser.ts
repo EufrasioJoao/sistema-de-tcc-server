@@ -38,11 +38,17 @@ export async function updateUser(req: AuthRequest, res: Response): Promise<void>
       res.status(403).json({ success: false, message: "Não autorizado a atualizar este usuário" });
       return;
     }
-    
+
     // Only an admin can change a user's role or active status
     if ((data.role || data.is_active !== undefined) && requestingUser.role !== 'ADMIN') {
-        res.status(403).json({ success: false, message: "Não autorizado a alterar status ou função do usuário" });
-        return;
+      res.status(403).json({ success: false, message: "Não autorizado a alterar status ou função do usuário" });
+      return;
+    }
+
+    // Admins cannot change their own role
+    if (data.role && requestingUser.id === id) {
+      res.status(403).json({ success: false, message: "Não é possível alterar sua própria função" });
+      return;
     }
 
     if (data.email && data.email !== userToUpdate.email) {

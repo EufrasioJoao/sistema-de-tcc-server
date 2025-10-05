@@ -11,6 +11,7 @@ import {
   intelligentTCCSearch,
   getSearchHistory,
   clearSearchHistory,
+  streamFile,
 } from "../controllers/tccController";
 import {
   createTCCWithUpload,
@@ -45,6 +46,10 @@ router.delete("/search/history", clearSearchHistory);
 
 // Get TCC by ID - Check specific TCC access
 router.get("/:id", requireTCCAccess, getTCCById);
+
+
+router.get("/stream/:id", authMiddleware, streamFile);
+
 
 // Download TCC file - Check file access permissions (handled in controller)
 router.get("/:id/download/:fileType", requireTCCAccess, downloadTCCFile);

@@ -1,10 +1,13 @@
 import { db } from "../lib/db";
-import { Response } from "express";
+import { Request, Response } from "express";
 import { AuthRequest } from "../middlewares/authMiddleware";
 import { TccType, UserRoles } from "@prisma/client";
 import { generatePresignedUrl } from "../services/s3Service";
 import { canDownloadFile } from "../middlewares/roleMiddleware";
 import { AuditService } from "../services/auditService";
+import env from "../config/env";
+import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+
 
 // Get all TCCs with pagination and filtering
 export async function getAllTCCs(
@@ -440,7 +443,7 @@ export async function getTCCChartsStatistics(
     // Area Chart Data: Daily TCC registrations over the last 90 days (3 months) up to today
     const today = new Date();
     today.setHours(23, 59, 59, 999);
-    
+
     const ninetyDaysAgo = new Date(today);
     ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 89); // 90 days including today
     ninetyDaysAgo.setHours(0, 0, 0, 0);
@@ -471,7 +474,7 @@ export async function getTCCChartsStatistics(
     recentTccs.forEach((tcc) => {
       const tccCreationDate = new Date(tcc.createdAt);
       tccCreationDate.setHours(0, 0, 0, 0);
-      
+
       if (tccCreationDate >= ninetyDaysAgo && tccCreationDate <= today) {
         const dateStr = tccCreationDate.toISOString().split('T')[0];
         const dayData = areaChartData.find((d) => d.date === dateStr);
@@ -499,6 +502,96 @@ export async function getTCCChartsStatistics(
     });
   }
 }
+
+
+export async function streamFile(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+
+    // Buscar o arquivo no banco de dados
+    const file = await db.file.findUnique({
+      where: { id: id },
+    });
+
+    if (!file) {
+      res.status(404).json({ success: false, message: "File not found" });
+      return;
+    }
+
+    // Configuração para acesso ao S3
+    const BUCKET_NAME = env.AWS_S3_BUCKET_NAME;
+    const s3Key = file.filename;
+
+    try {
+      // Buscar o arquivo do S3
+      const command = new GetObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: s3Key,
+      });
+
+
+      const s3 = new S3Client({
+        region: env.AWS_S3_BUCKET_REGION,
+        credentials: {
+          accessKeyId: env.AWS_ACCESS_KEY,
+          secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
+        },
+      });
+
+      const s3Response = await s3.send(command);
+
+      if (!s3Response.Body) {
+        res.status(404).json({
+          success: false,
+          message: "File content not available",
+        });
+        return;
+      }
+
+      // Definir headers apropriados
+      res.setHeader("Content-Type", s3Response.ContentType || "application/octet-stream");
+      res.setHeader("Content-Length", s3Response.ContentLength || 0);
+      res.setHeader("Content-Disposition", `inline; filename="${file.displayName}"`);
+
+      // Headers para permitir CORS se necessário
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Access-Control-Allow-Methods", "GET");
+      res.setHeader("Cache-Control", "public, max-age=3600");
+
+      // Stream o arquivo diretamente para a resposta
+      const stream = s3Response.Body as NodeJS.ReadableStream;
+      stream.pipe(res);
+
+      // Tratar erros no stream
+      stream.on("error", (error) => {
+        console.error("Stream error:", error);
+        if (!res.headersSent) {
+          res.status(500).json({
+            success: false,
+            message: "Error streaming file",
+          });
+        }
+      });
+
+    } catch (s3Error: any) {
+      console.error(`S3 error for file ${id}:`, s3Error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to retrieve file from storage",
+        error: s3Error.message,
+      });
+    }
+  } catch (error: any) {
+    console.error("Error in streamFile:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Error streaming file",
+      error: error.message,
+    });
+  }
+}
+
+
 
 // Get TCC by ID
 export async function getTCCById(
@@ -1258,9 +1351,9 @@ export async function downloadTCCFile(
 
     // Log TCC download audit
     await AuditService.logTCCDownload(
-      requestingUser.id, 
-      tcc.id, 
-      fileToDownload.id, 
+      requestingUser.id,
+      tcc.id,
+      fileToDownload.id,
       fileType as 'main' | 'defense'
     );
 
