@@ -25,7 +25,6 @@ const envSchema = z.object({
   SMT_PASSWORD: z.string(),
 
   FRONTEND_URL: z.string(),
-  SERVER_URL: z.string(),
 
   ENVIRONMENT: z.enum(["development", "production"]),
 
