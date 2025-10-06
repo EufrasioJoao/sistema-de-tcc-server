@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestão de TCCs - Documentação Frontend</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8fafc;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 10px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+        
+        .subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .section {
+            background: white;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h2 {
+            color: #2d3748;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+        
+        h3 {
+            color: #4a5568;
+            margin: 1.5rem 0 1rem 0;
+            font-size: 1.4rem;
+        }
+        
+        h4 {
+            color: #718096;
+            margin: 1rem 0 0.5rem 0;
+            font-size: 1.1rem;
+        }
+        
+        .tech-stack {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .tech-item {
+            background: #f7fafc;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .tech-item h4 {
+            margin-top: 0;
+            color: #667eea;
+        }
+        
+        .folder-structure {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        
+        .folder-structure .folder {
+            color: #ffd700;
+        }
+        
+        .folder-structure .file {
+            color: #90cdf4;
+        }
+        
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .feature-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .feature-card h4 {
+            margin-bottom: 0.5rem;
+            color: white;
+        }
+        
+        .dependency-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+        
+        .dependency-item {
+            background: #edf2f7;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        
+        .architecture-diagram {
+            background: #f7fafc;
+            border: 2px dashed #cbd5e0;
+            padding: 2rem;
+            text-align: center;
+            border-radius: 10px;
+            margin: 1rem 0;
+        }
+        
+        .route-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        
+        .route-table th,
+        .route-table td {
+            border: 1px solid #e2e8f0;
+            padding: 0.75rem;
+            text-align: left;
+        }
+        
+        .route-table th {
+            background: #667eea;
+            color: white;
+        }
+        
+        .route-table tr:nth-child(even) {
+            background: #f7fafc;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background: #667eea;
+            color: white;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin: 0.2rem;
+        }
+        
+        .warning {
+            background: #fed7d7;
+            border: 1px solid #fc8181;
+            color: #742a2a;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        
+        .info {
+            background: #bee3f8;
+            border: 1px solid #63b3ed;
+            color: #2a4365;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        
+        .success {
+            background: #c6f6d5;
+            border: 1px solid #68d391;
+            color: #22543d;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        
+        ul, ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .toc {
+            background: #edf2f7;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+        
+        .toc ul {
+            margin-left: 1rem;
+        }
+        
+        .toc a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .toc a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎓 Sistema de Gestão de TCCs</h1>
+            <p class="subtitle">Documentação Técnica do Frontend - Next.js 15 com App Router</p>
+        </header>
+
+        <div class="toc">
+            <h3>📋 Índice</h3>
+            <ul>
+                <li><a href="#overview">1. Visão Geral</a></li>
+                <li><a href="#architecture">2. Arquitetura</a></li>
+                <li><a href="#tech-stack">3. Stack Tecnológica</a></li>
+                <li><a href="#folder-structure">4. Estrutura de Pastas</a></li>
+                <li><a href="#dependencies">5. Dependências</a></li>
+                <li><a href="#features">6. Funcionalidades</a></li>
+                <li><a href="#routing">7. Sistema de Rotas</a></li>
+                <li><a href="#components">8. Componentes</a></li>
+                <li><a href="#state-management">9. Gerenciamento de Estado</a></li>
+                <li><a href="#authentication">10. Autenticação</a></li>
+                <li><a href="#styling">11. Estilização</a></li>
+                <li><a href="#pwa">12. Progressive Web App</a></li>
+                <li><a href="#development">13. Desenvolvimento</a></li>
+                <li><a href="#deployment">14. Deploy</a></li>
+            </ul>
+        </div>
+
+        <section id="overview" class="section">
+            <h2>🎯 1. Visão Geral</h2>
+            <p>O frontend do Sistema de Gestão de TCCs é uma aplicação web moderna construída com <strong>Next.js 15</strong> utilizando o novo <strong>App Router</strong>. A aplicação oferece uma interface intuitiva e responsiva para gerenciar Trabalhos de Conclusão de Curso (TCCs), incluindo monografias, dissertações e teses.</p>
+            
+            <div class="info">
+                <strong>🎯 Objetivo:</strong> Fornecer uma interface web moderna, acessível e eficiente para o gerenciamento completo de TCCs em instituições de ensino superior.
+            </div>
+
+            <h3>Características Principais:</h3>
+            <ul>
+                <li>🚀 <strong>Next.js 15</strong> com App Router para performance otimizada</li>
+                <li>🎨 <strong>Tailwind CSS</strong> para estilização moderna e responsiva</li>
+                <li>🧩 <strong>shadcn/ui</strong> para componentes reutilizáveis</li>
+                <li>📱 <strong>PWA</strong> (Progressive Web App) para experiência mobile nativa</li>
+                <li>🔐 <strong>Autenticação JWT</strong> com middleware de proteção de rotas</li>
+                <li>🌐 <strong>Internacionalização</strong> preparada para múltiplos idiomas</li>
+                <li>♿ <strong>Acessibilidade</strong> seguindo padrões WCAG</li>
+                <li>📊 <strong>Dashboards interativos</strong> com gráficos e relatórios</li>
+            </ul>
+        </section>
+
+        <section id="architecture" class="section">
+            <h2>🏗️ 2. Arquitetura</h2>
+            
+            <div class="architecture-diagram">
+                <h3>Arquitetura do Frontend</h3>
+                <pre>
+┌─────────────────────────────────────────────────────────────┐
+│                    NEXT.JS 15 APP ROUTER                    │
+├─────────────────────────────────────────────────────────────┤
+│  📱 PWA Layer          🎨 UI Layer          🔐 Auth Layer   │
+│  ├─ Service Worker     ├─ shadcn/ui         ├─ JWT Tokens   │
+│  ├─ Offline Support    ├─ Tailwind CSS     ├─ Middleware   │
+│  └─ App Manifest       └─ Framer Motion    └─ Session Mgmt │
+├─────────────────────────────────────────────────────────────┤
+│                    COMPONENT ARCHITECTURE                   │
+│  📄 Pages              🧩 Components        🎯 Contexts     │
+│  ├─ App Router         ├─ UI Components     ├─ App Context  │
+│  ├─ Layouts            ├─ Dashboard Comps   ├─ Language     │
+│  └─ Route Groups       └─ Form Components   └─ Font Context │
+├─────────────────────────────────────────────────────────────┤
+│                     DATA & STATE LAYER                     │
+│  🔄 TanStack Query     📡 API Client        💾 Local State │
+│  ├─ Server State       ├─ Axios HTTP       ├─ React State  │
+│  ├─ Caching            ├─ Request/Response ├─ Form State   │
+│  └─ Mutations          └─ Error Handling   └─ UI State     │
+└─────────────────────────────────────────────────────────────┘
+                </pre>
+            </div>
+
+            <h3>Padrões Arquiteturais:</h3>
+            <ul>
+                <li><strong>App Router:</strong> Utiliza o novo sistema de roteamento do Next.js 15</li>
+                <li><strong>Server Components:</strong> Renderização no servidor para melhor performance</li>
+                <li><strong>Client Components:</strong> Interatividade no cliente quando necessário</li>
+                <li><strong>Layouts Aninhados:</strong> Estrutura hierárquica de layouts</li>
+                <li><strong>Route Groups:</strong> Organização lógica de rotas</li>
+                <li><strong>Middleware:</strong> Proteção de rotas e autenticação</li>
+            </ul>
+        </section>
+
+        <section id="tech-stack" class="section">
+            <h2>⚡ 3. Stack Tecnológica</h2>
+            
+            <div class="tech-stack">
+                <div class="tech-item">
+                    <h4>🚀 Framework Principal</h4>
+                    <p><strong>Next.js 15.5.0</strong> - Framework React com App Router, Server Components e otimizações automáticas</p>
+                </div>
+                
+                <div class="tech-item">
+                    <h4>⚛️ Biblioteca UI</h4>
+                    <p><strong>React 19.1.1</strong> - Biblioteca para construção de interfaces de usuário com hooks modernos</p>
+                </div>
+                
+                <div class="tech-item">
+                    <h4>🎨 Estilização</h4>
+                    <p><strong>Tailwind CSS 4.1.12</strong> - Framework CSS utility-first para design responsivo</p>
+                </div>
+                
+                <div class="tech-item">
+                    <h4>🧩 Componentes UI</h4>
+                    <p><strong>shadcn/ui + Radix UI</strong> - Sistema de componentes acessíveis e customizáveis</p>
+                </div>
+                
+                <div class="tech-item">
+                    <h4>📊 Gráficos e Visualização</h4>
+                    <p><strong>Recharts 2.15.4</strong> - Biblioteca para gráficos interativos e dashboards</p>
+                </div>
+                
+                <div class="tech-item">
+                    <h4>🔄 Gerenciamento de Estado</h4>
+                    <p><strong>TanStack Query 5.85.3</strong> - Gerenciamento de estado do servidor com cache inteligente</p>
+                </div>
+                
+                <div class="tech-item">
+                    <h4>📝 Formulários</h4>
+                    <p><strong>React Hook Form 7.62.0</strong> - Biblioteca para formulários performáticos com validação</p>
+                </div>
+                
+                <div class="tech-item">
+                    <h4>🌐 HTTP Client</h4>
+                    <p><strong>Axios 1.7.9</strong> - Cliente HTTP para comunicação com a API</p>
+                </div>
+                
+                <div class="tech-item">
+                    <h4>🎭 Animações</h4>
+                    <p><strong>Framer Motion 12.23.12</strong> - Biblioteca para animações fluidas e interações</p>
+                </div>
+                
+                <div class="tech-item">
+                    <h4>📱 PWA</h4>
+                    <p><strong>next-pwa 5.6.0</strong> - Plugin para transformar a aplicação em PWA</p>
+                </div>
+                
+                <div class="tech-item">
+                    <h4>🔐 Autenticação</h4>
+                    <p><strong>jose 5.9.6</strong> - Biblioteca para JWT e criptografia</p>
+                </div>
+                
+                <div class="tech-item">
+                    <h4>📄 Visualização de PDFs</h4>
+                    <p><strong>react-pdf 10.1.0</strong> - Componente para visualização de documentos PDF</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="folder-structure" class="section">
+            <h2>📁 4. Estrutura de Pastas</h2>
+            
+            <div class="folder-structure">
+frontend/
+├── <span class="folder">src/</span>
+│   ├── <span class="folder">app/</span>                          # App Router (Next.js 15)
+│   │   ├── <span class="folder">auth/</span>                     # Rotas de autenticação
+│   │   │   ├── <span class="folder">signin/</span>               # Página de login
+│   │   │   ├── <span class="folder">signup/</span>               # Página de cadastro
+│   │   │   └── <span class="folder">forgot-password/</span>      # Recuperação de senha
+│   │   ├── <span class="folder">dashboard/</span>                # Painel administrativo
+│   │   │   ├── <span class="folder">tccs/</span>                 # Gestão de TCCs
+│   │   │   ├── <span class="folder">students/</span>             # Gestão de estudantes
+│   │   │   ├── <span class="folder">courses/</span>              # Gestão de cursos
+│   │   │   ├── <span class="folder">users/</span>                # Gestão de usuários
+│   │   │   ├── <span class="folder">reports/</span>              # Relatórios
+│   │   │   ├── <span class="folder">audit/</span>                # Logs de auditoria
+│   │   │   ├── <span class="folder">backup/</span>               # Sistema de backup
+│   │   │   ├── <span class="folder">settings/</span>             # Configurações
+│   │   │   └── <span class="folder">_components/</span>          # Componentes do dashboard
+│   │   ├── <span class="file">layout.tsx</span>                  # Layout raiz
+│   │   ├── <span class="file">page.tsx</span>                    # Página inicial
+│   │   ├── <span class="file">globals.css</span>                 # Estilos globais
+│   │   └── <span class="file">session.ts</span>                  # Gerenciamento de sessão
+│   ├── <span class="folder">components/</span>                   # Componentes reutilizáveis
+│   │   ├── <span class="folder">ui/</span>                       # Componentes shadcn/ui
+│   │   ├── <span class="folder">dashboard/</span>                # Componentes do dashboard
+│   │   ├── <span class="file">Loading.tsx</span>                 # Componente de loading
+│   │   ├── <span class="file">PermissionGuard.tsx</span>         # Proteção por permissões
+│   │   └── <span class="file">providers.tsx</span>               # Providers globais
+│   ├── <span class="folder">contexts/</span>                     # Contextos React
+│   │   ├── <span class="file">app-context.tsx</span>             # Contexto principal da app
+│   │   ├── <span class="file">language-context.tsx</span>        # Contexto de idioma
+│   │   └── <span class="file">font-context.tsx</span>            # Contexto de fontes
+│   ├── <span class="folder">hooks/</span>                        # Custom hooks
+│   │   ├── <span class="file">useDebounce.ts</span>              # Hook de debounce
+│   │   └── <span class="file">use-mobile.tsx</span>              # Hook para detecção mobile
+│   ├── <span class="folder">lib/</span>                          # Utilitários e configurações
+│   │   ├── <span class="file">utils.ts</span>                    # Funções utilitárias
+│   │   └── <span class="file">api.ts</span>                      # Cliente HTTP configurado
+│   ├── <span class="folder">types/</span>                        # Definições de tipos TypeScript
+│   │   └── <span class="file">index.ts</span>                    # Tipos principais
+│   ├── <span class="folder">fonts/</span>                        # Fontes customizadas
+│   └── <span class="file">middleware.ts</span>                   # Middleware do Next.js
+├── <span class="folder">public/</span>                           # Arquivos estáticos
+│   ├── <span class="folder">images/</span>                       # Imagens da aplicação
+│   ├── <span class="file">manifest.json</span>                   # Manifesto PWA
+│   └── <span class="file">favicon.ico</span>                     # Ícone da aplicação
+├── <span class="file">next.config.ts</span>                      # Configuração do Next.js
+├── <span class="file">tailwind.config.ts</span>                  # Configuração do Tailwind
+├── <span class="file">tsconfig.json</span>                       # Configuração do TypeScript
+├── <span class="file">components.json</span>                     # Configuração shadcn/ui
+└── <span class="file">package.json</span>                        # Dependências e scripts
+            </div>
+
+            <div class="info">
+                <strong>📝 Convenções de Nomenclatura:</strong>
+                <ul>
+                    <li><strong>Pastas:</strong> kebab-case (ex: forgot-password)</li>
+                    <li><strong>Componentes:</strong> PascalCase (ex: UserTable.tsx)</li>
+                    <li><strong>Hooks:</strong> camelCase com prefixo 'use' (ex: useDebounce.ts)</li>
+                    <li><strong>Utilitários:</strong> camelCase (ex: formatDate.ts)</li>
+                    <li><strong>Componentes Privados:</strong> Prefixo underscore (_components)</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="dependencies" class="section">
+            <h2>📦 5. Dependências</h2>
+            
+            <h3>Dependências Principais de Produção:</h3>
+            <div class="dependency-list">
+                <div class="dependency-item">next@^15.5.0</div>
+                <div class="dependency-item">react@^19.1.1</div>
+                <div class="dependency-item">react-dom@^19.1.1</div>
+                <div class="dependency-item">tailwindcss@^4.1.12</div>
+                <div class="dependency-item">@tanstack/react-query@^5.85.3</div>
+                <div class="dependency-item">@tanstack/react-table@^8.20.6</div>
+                <div class="dependency-item">axios@^1.7.9</div>
+                <div class="dependency-item">react-hook-form@^7.62.0</div>
+                <div class="dependency-item">@hookform/resolvers@^3.10.0</div>
+                <div class="dependency-item">zod@^3.25.76</div>
+                <div class="dependency-item">framer-motion@^12.23.12</div>
+                <div class="dependency-item">lucide-react@^0.468.0</div>
+                <div class="dependency-item">recharts@^2.15.4</div>
+                <div class="dependency-item">react-pdf@^10.1.0</div>
+                <div class="dependency-item">next-pwa@^5.6.0</div>
+                <div class="dependency-item">next-themes@^0.4.6</div>
+                <div class="dependency-item">next-intl@^3.26.3</div>
+                <div class="dependency-item">jose@^5.9.6</div>
+                <div class="dependency-item">sonner@^1.7.4</div>
+                <div class="dependency-item">react-dropzone@^14.3.5</div>
+                <div class="dependency-item">date-fns@^4.1.0</div>
+                <div class="dependency-item">class-variance-authority@^0.7.1</div>
+                <div class="dependency-item">clsx@^2.1.1</div>
+                <div class="dependency-item">tailwind-merge@^2.5.5</div>
+                <div class="dependency-item">cmdk@^1.1.1</div>
+                <div class="dependency-item">input-otp@^1.4.2</div>
+                <div class="dependency-item">react-day-picker@^9.9.0</div>
+                <div class="dependency-item">react-resizable-panels@^2.1.9</div>
+                <div class="dependency-item">react-spinners@^0.15.0</div>
+                <div class="dependency-item">use-debounce@^10.0.5</div>
+                <div class="dependency-item">vaul@^1.1.2</div>
+                <div class="dependency-item">embla-carousel-react@^8.6.0</div>
+            </div>
+
+            <h3>Componentes Radix UI:</h3>
+            <div class="dependency-list">
+                <div class="dependency-item">@radix-ui/react-accordion</div>
+                <div class="dependency-item">@radix-ui/react-alert-dialog</div>
+                <div class="dependency-item">@radix-ui/react-avatar</div>
+                <div class="dependency-item">@radix-ui/react-checkbox</div>
+                <div class="dependency-item">@radix-ui/react-dialog</div>
+                <div class="dependency-item">@radix-ui/react-dropdown-menu</div>
+                <div class="dependency-item">@radix-ui/react-label</div>
+                <div class="dependency-item">@radix-ui/react-popover</div>
+                <div class="dependency-item">@radix-ui/react-select</div>
+                <div class="dependency-item">@radix-ui/react-tabs</div>
+                <div class="dependency-item">@radix-ui/react-tooltip</div>
+            </div>
+
+            <h3>Dependências de Desenvolvimento:</h3>
+            <div class="dependency-list">
+                <div class="dependency-item">typescript@^5</div>
+                <div class="dependency-item">@types/node@^20</div>
+                <div class="dependency-item">@types/react@18.3.23</div>
+                <div class="dependency-item">@types/react-dom@^18</div>
+                <div class="dependency-item">eslint@^9</div>
+                <div class="dependency-item">eslint-config-next@15.1.1</div>
+                <div class="dependency-item">postcss@^8</div>
+                <div class="dependency-item">@tailwindcss/postcss@^4.1.12</div>
+            </div>
+        </section>
+
+        <section id="features" class="section">
+            <h2>✨ 6. Funcionalidades</h2>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>🎓 Gestão de TCCs</h4>
+                    <p>Upload, visualização, busca inteligente e organização de trabalhos acadêmicos</p>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>👥 Gestão de Usuários</h4>
+                    <p>Controle de acesso baseado em papéis com diferentes níveis de permissão</p>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>🎯 Dashboard Interativo</h4>
+                    <p>Painéis com gráficos, estatísticas e métricas em tempo real</p>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>📊 Relatórios Avançados</h4>
+                    <p>Geração de relatórios detalhados com filtros e exportação</p>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>🔍 Busca Inteligente</h4>
+                    <p>Sistema de busca semântica com filtros avançados e sugestões</p>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>📱 PWA Nativo</h4>
+                    <p>Experiência mobile nativa com suporte offline</p>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>🔐 Segurança Avançada</h4>
+                    <p>Autenticação JWT, controle de sessão e auditoria completa</p>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>♿ Acessibilidade</h4>
+                    <p>Interface acessível seguindo padrões WCAG 2.1</p>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>🌙 Tema Escuro/Claro</h4>
+                    <p>Suporte a temas com transições suaves</p>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>🌐 Internacionalização</h4>
+                    <p>Preparado para múltiplos idiomas e localizações</p>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>💾 Backup Automático</h4>
+                    <p>Sistema de backup com agendamento e restauração</p>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>📈 Analytics</h4>
+                    <p>Métricas de uso e análise de comportamento</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="routing" class="section">
+            <h2>🛣️ 7. Sistema de Rotas</h2>
+            
+            <p>O sistema utiliza o <strong>App Router</strong> do Next.js 15, que oferece roteamento baseado em sistema de arquivos com layouts aninhados e componentes de servidor.</p>
+
+            <h3>Estrutura de Rotas:</h3>
+            <table class="route-table">
+                <thead>
+                    <tr>
+                        <th>Rota</th>
+                        <th>Descrição</th>
+                        <th>Proteção</th>
+                        <th>Componentes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>/</code></td>
+                        <td>Página inicial (redireciona para login)</td>
+                        <td>Pública</td>
+                        <td>Redirect Component</td>
+                    </tr>
+                    <tr>
+                        <td><code>/auth/signin</code></td>
+                        <td>Página de login</td>
+                        <td>Pública</td>
+                        <td>SignIn Form</td>
+                    </tr>
+                    <tr>
+                        <td><code>/auth/signup</code></td>
+                        <td>Página de cadastro</td>
+                        <td>Pública</td>
+                        <td>SignUp Form</td>
+                    </tr>
+                    <tr>
+                        <td><code>/auth/forgot-password</code></td>
+                        <td>Recuperação de senha</td>
+                        <td>Pública</td>
+                        <td>Password Reset</td>
+                    </tr>
+                    <tr>
+                        <td><code>/dashboard</code></td>
+                        <td>Painel principal</td>
+                        <td>Autenticada</td>
+                        <td>Dashboard Layout</td>
+                    </tr>
+                    <tr>
+                        <td><code>/dashboard/tccs</code></td>
+                        <td>Gestão de TCCs</td>
+                        <td>Autenticada</td>
+                        <td>TCC Management</td>
+                    </tr>
+                    <tr>
+                        <td><code>/dashboard/students</code></td>
+                        <td>Gestão de estudantes</td>
+                        <td>Autenticada</td>
+                        <td>Student Management</td>
+                    </tr>
+                    <tr>
+                        <td><code>/dashboard/courses</code></td>
+                        <td>Gestão de cursos</td>
+                        <td>Autenticada</td>
+                        <td>Course Management</td>
+                    </tr>
+                    <tr>
+                        <td><code>/dashboard/users</code></td>
+                        <td>Gestão de usuários</td>
+                        <td>Admin/Manager</td>
+                        <td>User Management</td>
+                    </tr>
+                    <tr>
+                        <td><code>/dashboard/reports</code></td>
+                        <td>Relatórios e estatísticas</td>
+                        <td>Autenticada</td>
+                        <td>Reports Dashboard</td>
+                    </tr>
+                    <tr>
+                        <td><code>/dashboard/audit</code></td>
+                        <td>Logs de auditoria</td>
+                        <td>Admin/Manager</td>
+                        <td>Audit Logs</td>
+                    </tr>
+                    <tr>
+                        <td><code>/dashboard/backup</code></td>
+                        <td>Sistema de backup</td>
+                        <td>Admin/Manager</td>
+                        <td>Backup Management</td>
+                    </tr>
+                    <tr>
+                        <td><code>/dashboard/settings</code></td>
+                        <td>Configurações do sistema</td>
+                        <td>Admin</td>
+                        <td>Settings Panel</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Middleware de Proteção:</h3>
+            <div class="code-block">
+// middleware.ts
+const protectedRoutes = ["/dashboard"];
+const redirectRoutes = [
+  { path: "/auth/signin", redirect: "/dashboard" },
+  { path: "/", redirect: "/dashboard" },
+];
+
+// Verifica autenticação via JWT cookie
+// Redireciona usuários não autenticados para login
+// Redireciona usuários autenticados das páginas de auth
+            </div>
+
+            <h3>Layouts Aninhados:</h3>
+            <ul>
+                <li><strong>Root Layout:</strong> Configuração global, providers, fontes</li>
+                <li><strong>Auth Layout:</strong> Layout específico para páginas de autenticação</li>
+                <li><strong>Dashboard Layout:</strong> Sidebar, header, navegação principal</li>
+                <li><strong>Page Layouts:</strong> Layouts específicos para cada seção</li>
+            </ul>
+        </section>
+
+        <section id="components" class="section">
+            <h2>🧩 8. Componentes</h2>
+            
+            <h3>Arquitetura de Componentes:</h3>
+            
+            <h4>📁 /components/ui/ - Sistema de Design (shadcn/ui)</h4>
+            <p>Componentes base reutilizáveis construídos sobre Radix UI:</p>
+            <div class="dependency-list">
+                <div class="dependency-item">Button</div>
+                <div class="dependency-item">Input</div>
+                <div class="dependency-item">Dialog</div>
+                <div class="dependency-item">Table</div>
+                <div class="dependency-item">Form</div>
+                <div class="dependency-item">Card</div>
+                <div class="dependency-item">Badge</div>
+                <div class="dependency-item">Avatar</div>
+                <div class="dependency-item">Dropdown Menu</div>
+                <div class="dependency-item">Tooltip</div>
+                <div class="dependency-item">Progress</div>
+                <div class="dependency-item">Skeleton</div>
+                <div class="dependency-item">Tabs</div>
+                <div class="dependency-item">Calendar</div>
+                <div class="dependency-item">Chart</div>
+            </div>
+
+            <h4>📁 /components/dashboard/ - Componentes do Dashboard</h4>
+            <ul>
+                <li><strong>Header.tsx:</strong> Cabeçalho com navegação e perfil do usuário</li>
+                <li><strong>Sidebar.tsx:</strong> Menu lateral com navegação principal</li>
+            </ul>
+
+            <h4>📁 /app/dashboard/_components/ - Componentes Específicos</h4>
+            <ul>
+                <li><strong>TccChart.tsx:</strong> Gráficos de estatísticas de TCCs</li>
+                <li><strong>CoursesTable.tsx:</strong> Tabela de cursos com filtros</li>
+                <li><strong>BackupTable.tsx:</strong> Tabela de histórico de backups</li>
+            </ul>
+
+            <h4>🔒 Componentes de Proteção:</h4>
+            <div class="code-block">
+// PermissionGuard.tsx
+interface PermissionGuardProps {
+  children: React.ReactNode;
+  requiredPermission: string;
+  fallback?: React.ReactNode;
+}
+
+// Protege componentes baseado em permissões do usuário
+// Renderiza fallback ou null se sem permissão
+            </div>
+
+            <h3>Padrões de Componentes:</h3>
+            <ul>
+                <li><strong>Server Components:</strong> Para renderização no servidor</li>
+                <li><strong>Client Components:</strong> Para interatividade ("use client")</li>
+                <li><strong>Compound Components:</strong> Para componentes complexos</li>
+                <li><strong>Render Props:</strong> Para lógica reutilizável</li>
+                <li><strong>Higher-Order Components:</strong> Para funcionalidades transversais</li>
+            </ul>
+        </section>
+
+        <section id="state-management" class="section">
+            <h2>🔄 9. Gerenciamento de Estado</h2>
+            
+            <h3>Estratégia de Estado:</h3>
+            
+            <div class="tech-stack">
+                <div class="tech-item">
+                    <h4>🌐 Estado do Servidor</h4>
+                    <p><strong>TanStack Query (React Query)</strong> - Cache inteligente, sincronização automática, otimistic updates</p>
+                </div>
+                
+                <div class="tech-item">
+                    <h4>🎯 Estado da Aplicação</h4>
+                    <p><strong>React Context</strong> - Estado global para autenticação, tema, idioma</p>
+                </div>
+                
+                <div class="tech-item">
+                    <h4>📝 Estado de Formulários</h4>
+                    <p><strong>React Hook Form</strong> - Gerenciamento performático de formulários</p>
+                </div>
+                
+                <div class="tech-item">
+                    <h4>🎨 Estado da UI</h4>
+                    <p><strong>React State</strong> - Estado local para componentes específicos</p>
+                </div>
+            </div>
+
+            <h3>Contextos Principais:</h3>
+            
+            <h4>🏠 AppContext (app-context.tsx):</h4>
+            <div class="code-block">
+interface AppContextType {
+  user: User | null;
+  saveUserData: (data: User | null) => Promise&lt;void&gt;;
+  permissions: PermissionHelpers;
+}
+
+// Gerencia dados do usuário e sistema de permissões
+// Fornece helpers para verificação de permissões
+// Sincroniza com dados da sessão JWT
+            </div>
+
+            <h4>🌐 LanguageContext:</h4>
+            <ul>
+                <li>Gerenciamento de idioma da aplicação</li>
+                <li>Integração com next-intl</li>
+                <li>Persistência da preferência do usuário</li>
+            </ul>
+
+            <h4>🎨 FontContext:</h4>
+            <ul>
+                <li>Gerenciamento de fontes customizadas</li>
+                <li>Suporte a múltiplas famílias de fontes</li>
+                <li>Otimização de carregamento</li>
+            </ul>
+
+            <h3>TanStack Query - Configuração:</h3>
+            <div class="code-block">
+// providers.tsx
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutos
+      cacheTime: 10 * 60 * 1000, // 10 minutos
+      retry: 3,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+// Configuração otimizada para performance
+// Cache inteligente com invalidação automática
+// Retry automático em caso de falha
+            </div>
+
+            <h3>Padrões de Estado:</h3>
+            <ul>
+                <li><strong>Optimistic Updates:</strong> Atualizações otimistas para melhor UX</li>
+                <li><strong>Background Refetch:</strong> Sincronização em background</li>
+                <li><strong>Infinite Queries:</strong> Para paginação infinita</li>
+                <li><strong>Mutations:</strong> Para operações de escrita com rollback</li>
+            </ul>
+        </section>
+
+        <section id="authentication" class="section">
+            <h2>🔐 10. Autenticação e Autorização</h2>
+            
+            <h3>Sistema de Autenticação:</h3>
+            
+            <div class="info">
+                <strong>🔑 Fluxo de Autenticação:</strong>
+                <ol>
+                    <li>Login via formulário com email/senha</li>
+                    <li>Servidor retorna JWT token</li>
+                    <li>Token armazenado em cookie httpOnly</li>
+                    <li>Middleware valida token em cada requisição</li>
+                    <li>Contexto da aplicação gerencia estado do usuário</li>
+                </ol>
+            </div>
+
+            <h3>Middleware de Proteção:</h3>
+            <div class="code-block">
+// middleware.ts
+export default async function middleware(req: NextRequest) {
+  const path = req.nextUrl.pathname;
+  const isProtectedRoute = protectedRoutes.some(route => 
+    path.startsWith(route)
+  );
+  
+  const cookie = (await cookies()).get("session")?.value;
+  
+  if (!cookie && isProtectedRoute) {
+    return NextResponse.redirect(new URL("/auth/signin", req.nextUrl));
+  }
+  
+  const session = await decrypt(cookie);
+  
+  if (isProtectedRoute && !session?.data.userId) {
+    return NextResponse.redirect(new URL("/auth/signin", req.nextUrl));
+  }
+  
+  return NextResponse.next();
+}
+            </div>
+
+            <h3>Sistema de Permissões:</h3>
+            <table class="route-table">
+                <thead>
+                    <tr>
+                        <th>Papel</th>
+                        <th>Permissões</th>
+                        <th>Acesso</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge">ADMIN</span></td>
+                        <td>Acesso total ao sistema</td>
+                        <td>Todas as funcionalidades</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge">SYSTEM_MANAGER</span></td>
+                        <td>Gestão de TCCs, usuários, relatórios</td>
+                        <td>Dashboard completo exceto configurações</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge">COURSE_COORDINATOR</span></td>
+                        <td>Gestão de TCCs do seu curso</td>
+                        <td>TCCs, estudantes, relatórios do curso</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge">ACADEMIC_REGISTRY</span></td>
+                        <td>Visualização e cadastro de TCCs</td>
+                        <td>TCCs, estudantes, relatórios básicos</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Helpers de Permissão:</h3>
+            <div class="code-block">
+// app-context.tsx
+const permissions: PermissionHelpers = {
+  canViewTCC: (tcc?: TCC) => boolean,
+  canModifyTCC: (tcc?: TCC) => boolean,
+  canDeleteTCC: (tcc?: TCC) => boolean,
+  canDownloadFile: (tcc?: TCC) => boolean,
+  canCreateTCC: () => boolean,
+  canManageUsers: () => boolean,
+  canManageOrganization: () => boolean,
+  isAdmin: () => boolean,
+  isSystemManager: () => boolean,
+  // ... outros helpers
+};
+            </div>
+
+            <h3>Proteção de Componentes:</h3>
+            <div class="code-block">
+// Uso do PermissionGuard
+&lt;PermissionGuard requiredPermission="canManageUsers"&gt;
+  &lt;UserManagementPanel /&gt;
+&lt;/PermissionGuard&gt;
+
+// Uso direto dos helpers
+{permissions.canDeleteTCC(tcc) && (
+  &lt;DeleteButton onClick={handleDelete} /&gt;
+)}
+            </div>
+        </section>
+
+        <section id="styling" class="section">
+            <h2>🎨 11. Estilização e Design System</h2>
+            
+            <h3>Tailwind CSS + shadcn/ui:</h3>
+            
+            <div class="tech-stack">
+                <div class="tech-item">
+                    <h4>🎯 Tailwind CSS 4.1.12</h4>
+                    <p>Framework CSS utility-first com classes pré-definidas para desenvolvimento rápido</p>
+                </div>
+                
+                <div class="tech-item">
+                    <h4>🧩 shadcn/ui</h4>
+                    <p>Sistema de componentes baseado em Radix UI com design consistente</p>
+                </div>
+                
+                <div class="tech-item">
+                    <h4>🎭 Framer Motion</h4>
+                    <p>Animações fluidas e transições para melhor experiência do usuário</p>
+                </div>
+                
+                <div class="tech-item">
+                    <h4>🌙 next-themes</h4>
+                    <p>Suporte a tema escuro/claro com transições suaves</p>
+                </div>
+            </div>
+
+            <h3>Configuração do Design System:</h3>
+            <div class="code-block">
+// components.json (shadcn/ui config)
+{
+  "style": "new-york",
+  "rsc": true,
+  "tsx": true,
+  "tailwind": {
+    "config": "tailwind.config.ts",
+    "css": "src/app/globals.css",
+    "baseColor": "zinc",
+    "cssVariables": true
+  },
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils"
+  }
+}
+            </div>
+
+            <h3>Paleta de Cores:</h3>
+            <div class="tech-stack">
+                <div class="tech-item" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <h4 style="color: white;">🎨 Primária</h4>
+                    <p style="color: white;">Gradiente azul-roxo para elementos principais</p>
+                </div>
+                
+                <div class="tech-item" style="background: #f7fafc; border-left-color: #4a5568;">
+                    <h4>⚫ Neutros</h4>
+                    <p>Escala de cinzas para textos e backgrounds</p>
+                </div>
+                
+                <div class="tech-item" style="background: #fed7d7; border-left-color: #e53e3e;">
+                    <h4>🔴 Erro</h4>
+                    <p>Vermelho para estados de erro e alertas</p>
+                </div>
+                
+                <div class="tech-item" style="background: #c6f6d5; border-left-color: #38a169;">
+                    <h4>🟢 Sucesso</h4>
+                    <p>Verde para confirmações e estados positivos</p>
+                </div>
+            </div>
+
+            <h3>Tipografia:</h3>
+            <ul>
+                <li><strong>Geist:</strong> Fonte principal para interface</li>
+                <li><strong>Roboto:</strong> Fonte alternativa para textos longos</li>
+                <li><strong>Poppins:</strong> Fonte para títulos e destaques</li>
+                <li><strong>Space Grotesk:</strong> Fonte para elementos técnicos</li>
+            </ul>
+
+            <h3>Responsividade:</h3>
+            <div class="code-block">
+// Breakpoints Tailwind
+sm: '640px'   // Tablets pequenos
+md: '768px'   // Tablets
+lg: '1024px'  // Laptops
+xl: '1280px'  // Desktops
+2xl: '1536px' // Telas grandes
+
+// Exemplo de uso
+&lt;div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"&gt;
+  // Layout responsivo automático
+&lt;/div&gt;
+            </div>
+
+            <h3>Animações e Transições:</h3>
+            <ul>
+                <li><strong>Page Transitions:</strong> Transições suaves entre páginas</li>
+                <li><strong>Loading States:</strong> Skeletons e spinners animados</li>
+                <li><strong>Hover Effects:</strong> Efeitos interativos nos componentes</li>
+                <li><strong>Modal Animations:</strong> Animações de entrada/saída de modais</li>
+                <li><strong>Chart Animations:</strong> Animações nos gráficos e dashboards</li>
+            </ul>
+        </section>
+
+        <section id="pwa" class="section">
+            <h2>📱 12. Progressive Web App (PWA)</h2>
+            
+            <h3>Configuração PWA:</h3>
+            
+            <div class="success">
+                <strong>✅ Recursos PWA Implementados:</strong>
+                <ul>
+                    <li>📱 Instalação como app nativo</li>
+                    <li>🔄 Service Worker para cache</li>
+                    <li>📡 Suporte offline básico</li>
+                    <li>🔔 Notificações push (preparado)</li>
+                    <li>📊 Manifest.json configurado</li>
+                    <li>🎯 Ícones adaptativos</li>
+                </ul>
+            </div>
+
+            <h3>Manifest.json:</h3>
+            <div class="code-block">
+// public/manifest.json
+{
+  "name": "Sistema de Gestão de TCCs",
+  "short_name": "TCC Manager",
+  "description": "Sistema de gerenciamento de TCCs",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#667eea",
+  "icons": [
+    {
+      "src": "/icon512_rounded.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon512_maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
+            </div>
+
+            <h3>Next-PWA Configuração:</h3>
+            <div class="code-block">
+// next.config.ts
+import withPWA from "next-pwa";
+
+const nextConfig: NextConfig = {
+  ...withPWA({
+    dest: "public",
+    register: true,
+    skipWaiting: true,
+  }),
+};
+            </div>
+
+            <h3>Componente de Instalação:</h3>
+            <div class="code-block">
+// components/pwa-install.tsx
+// Detecta se PWA pode ser instalada
+// Mostra prompt de instalação personalizado
+// Gerencia estado de instalação
+            </div>
+
+            <h3>Estratégias de Cache:</h3>
+            <ul>
+                <li><strong>Cache First:</strong> Para assets estáticos (CSS, JS, imagens)</li>
+                <li><strong>Network First:</strong> Para dados dinâmicos da API</li>
+                <li><strong>Stale While Revalidate:</strong> Para conteúdo que pode ser desatualizado</li>
+                <li><strong>Cache Only:</strong> Para recursos offline essenciais</li>
+            </ul>
+        </section>
+
+        <section id="development" class="section">
+            <h2>⚙️ 13. Desenvolvimento</h2>
+            
+            <h3>Scripts Disponíveis:</h3>
+            <div class="code-block">
+# Desenvolvimento com Turbopack (mais rápido)
+npm run dev
+
+# Desenvolvimento padrão
+npm run dev:n
+
+# Build de produção
+npm run build
+
+# Iniciar servidor de produção
+npm run start
+
+# Linting
+npm run lint
+            </div>
+
+            <h3>Configuração do Ambiente:</h3>
+            <div class="code-block">
+# .env.local (exemplo)
+NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-secret-key
+NEXTAUTH_URL=http://localhost:3000
+            </div>
+
+            <h3>Ferramentas de Desenvolvimento:</h3>
+            <ul>
+                <li><strong>TypeScript:</strong> Tipagem estática para maior segurança</li>
+                <li><strong>ESLint:</strong> Linting automático com regras do Next.js</li>
+                <li><strong>Prettier:</strong> Formatação automática de código</li>
+                <li><strong>Turbopack:</strong> Bundler ultra-rápido para desenvolvimento</li>
+                <li><strong>Hot Reload:</strong> Recarregamento automático durante desenvolvimento</li>
+            </ul>
+
+            <h3>Estrutura de Desenvolvimento:</h3>
+            <div class="code-block">
+# Fluxo de desenvolvimento recomendado
+1. git checkout -b feature/nova-funcionalidade
+2. npm run dev (desenvolvimento local)
+3. Implementar funcionalidade
+4. npm run lint (verificar código)
+5. npm run build (testar build)
+6. git commit e push
+7. Pull request para review
+            </div>
+
+            <h3>Debugging:</h3>
+            <ul>
+                <li><strong>React DevTools:</strong> Para debug de componentes</li>
+                <li><strong>TanStack Query DevTools:</strong> Para debug de queries</li>
+                <li><strong>Next.js DevTools:</strong> Para análise de performance</li>
+                <li><strong>Browser DevTools:</strong> Para debug geral</li>
+            </ul>
+        </section>
+
+        <section id="deployment" class="section">
+            <h2>🚀 14. Deploy e Produção</h2>
+            
+            <h3>Preparação para Produção:</h3>
+            
+            <div class="warning">
+                <strong>⚠️ Checklist Pré-Deploy:</strong>
+                <ul>
+                    <li>✅ Configurar variáveis de ambiente de produção</li>
+                    <li>✅ Testar build local: <code>npm run build</code></li>
+                    <li>✅ Verificar otimizações de imagem</li>
+                    <li>✅ Configurar domínio e SSL</li>
+                    <li>✅ Testar PWA em dispositivos móveis</li>
+                    <li>✅ Verificar performance com Lighthouse</li>
+                </ul>
+            </div>
+
+            <h3>Otimizações de Produção:</h3>
+            <ul>
+                <li><strong>Automatic Code Splitting:</strong> Next.js divide o código automaticamente</li>
+                <li><strong>Image Optimization:</strong> Otimização automática de imagens</li>
+                <li><strong>Bundle Analysis:</strong> Análise do tamanho dos bundles</li>
+                <li><strong>Tree Shaking:</strong> Remoção de código não utilizado</li>
+                <li><strong>Compression:</strong> Compressão gzip/brotli automática</li>
+            </ul>
+
+            <h3>Variáveis de Ambiente:</h3>
+            <div class="code-block">
+# .env.production
+NEXT_PUBLIC_API_URL=https://api.tcc-system.com
+NEXT_PUBLIC_APP_URL=https://tcc-system.com
+NEXTAUTH_SECRET=production-secret-key
+NEXTAUTH_URL=https://tcc-system.com
+
+# Configurações PWA
+NEXT_PUBLIC_PWA_ENABLED=true
+NEXT_PUBLIC_OFFLINE_ENABLED=true
+            </div>
+
+            <h3>Plataformas de Deploy Recomendadas:</h3>
+            
+            <div class="tech-stack">
+                <div class="tech-item">
+                    <h4>🔷 Vercel (Recomendado)</h4>
+                    <p>Plataforma nativa do Next.js com deploy automático e otimizações</p>
+                </div>
+                
+                <div class="tech-item">
+                    <h4>🌐 Netlify</h4>
+                    <p>Plataforma com suporte completo a Next.js e PWA</p>
+                </div>
+                
+                <div class="tech-item">
+                    <h4>☁️ AWS Amplify</h4>
+                    <p>Solução AWS com integração completa de serviços</p>
+                </div>
+                
+                <div class="tech-item">
+                    <h4>🐳 Docker</h4>
+                    <p>Containerização para deploy em qualquer ambiente</p>
+                </div>
+            </div>
+
+            <h3>Monitoramento:</h3>
+            <ul>
+                <li><strong>Analytics:</strong> Google Analytics ou Plausible</li>
+                <li><strong>Error Tracking:</strong> Sentry para monitoramento de erros</li>
+                <li><strong>Performance:</strong> Web Vitals e Lighthouse CI</li>
+                <li><strong>Uptime:</strong> Monitoramento de disponibilidade</li>
+            </ul>
+
+            <h3>Dockerfile (Exemplo):</h3>
+            <div class="code-block">
+FROM node:18-alpine AS base
+
+# Install dependencies
+FROM base AS deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Build the app
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npm run build
+
+# Production image
+FROM base AS runner
+WORKDIR /app
+ENV NODE_ENV production
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+EXPOSE 3000
+ENV PORT 3000
+
+CMD ["node", "server.js"]
+            </div>
+        </section>
+
+        <footer style="text-align: center; margin-top: 3rem; padding: 2rem; background: #f7fafc; border-radius: 10px;">
+            <h3>📚 Documentação Completa</h3>
+            <p>Esta documentação cobre todos os aspectos do frontend do Sistema de Gestão de TCCs.</p>
+            <p><strong>Versão:</strong> 1.0.0 | <strong>Última Atualização:</strong> Janeiro 2025</p>
+            <p><em>Desenvolvido para a Maratona de Inovação Tecnológica - UCM Nampula</em></p>
+        </footer>
+    </div>
+</body>
+</html>

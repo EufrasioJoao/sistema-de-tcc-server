@@ -19,6 +19,9 @@ import "./cronJobs";
 
 app.use("/.well-known", express.static(path.join(__dirname, ".well-known")));
 
+// Serve static files from public directory
+app.use("/public", express.static(path.join(__dirname, "public")));
+
 // CORS Configuration
 const corsOptions = {
   origin: "*",
@@ -53,9 +56,15 @@ app.get("/", (req, res) => {
     <p>API REST para gestão de Trabalhos de Conclusão de Curso</p>
     <ul>
       <li><a href="/api-docs">📚 Documentação da API (Swagger)</a></li>
+      <li><a href="/frontend-docs">🎨 Documentação do Frontend</a></li>
       <li><a href="/api/health">🔍 Status da API</a></li>
     </ul>
   `);
+});
+
+// Serve frontend documentation
+app.get("/frontend-docs", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "frontend.html"));
 });
 
 app.listen(PORT, () => {
