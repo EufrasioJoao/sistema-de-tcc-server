@@ -16,10 +16,10 @@ const prisma = new PrismaClient();
 async function backupDatabase() {
   const environment = env.ENVIRONMENT;
 
-  // if (environment !== "production") {
-  //   console.log("Backup is only allowed in production environment.");
-  //   return;
-  // }
+  if (environment !== "production") {
+    console.log("Backup is only allowed in production environment.");
+    return;
+  }
 
   const now = new Date();
   const year = now.getFullYear();
