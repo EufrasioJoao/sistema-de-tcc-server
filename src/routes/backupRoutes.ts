@@ -1,11 +1,10 @@
 import { Router } from "express";
-import { UserRoles } from "@prisma/client";
 import {
-    getBackupHistory,
-    createBackup,
-    downloadBackup,
+  getBackupHistory,
+  createBackup,
+  downloadBackup,
 } from "../controllers/backupController";
-import { authMiddleware } from "@/middlewares/authMiddleware";
+import { authMiddleware } from "../middlewares/authMiddleware";
 
 const router = Router();
 
