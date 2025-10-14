@@ -3,7 +3,10 @@ import { db } from "../../lib/db";
 import { AuthRequest } from "../../middlewares/authMiddleware";
 import { z } from "zod";
 
-export async function deleteUser(req: AuthRequest, res: Response): Promise<void> {
+export async function deleteUser(
+  req: AuthRequest,
+  res: Response
+): Promise<void> {
   const idSchema = z.object({
     id: z.string().uuid("ID de usuário inválido"),
   });
@@ -16,8 +19,18 @@ export async function deleteUser(req: AuthRequest, res: Response): Promise<void>
     // - Only ADMIN and SISTEM_MANAGER can delete users
     // - ADMIN can delete all users except their own account
     // - SISTEM_MANAGER can delete all users except ADMINs and their own account
-    if (!requestingUser || (requestingUser.role !== 'ADMIN' && requestingUser.role !== 'SISTEM_MANAGER')) {
-      res.status(403).json({ success: false, message: "Não autorizado. Apenas administradores e gerentes de sistema podem excluir usuários." });
+    if (
+      !requestingUser ||
+      (requestingUser.role !== "ADMIN" &&
+        requestingUser.role !== "SISTEM_MANAGER")
+    ) {
+      res
+        .status(403)
+        .json({
+          success: false,
+          message:
+            "Não autorizado. Apenas administradores e gerentes de sistema podem excluir usuários.",
+        });
       return;
     }
 
@@ -42,7 +55,9 @@ export async function deleteUser(req: AuthRequest, res: Response): Promise<void>
     });
 
     if (!userToDelete) {
-      res.status(404).json({ success: false, message: "Usuário não encontrado" });
+      res
+        .status(404)
+        .json({ success: false, message: "Usuário não encontrado" });
       return;
     }
 
@@ -53,7 +68,12 @@ export async function deleteUser(req: AuthRequest, res: Response): Promise<void>
     });
 
     if (!requestingUserFull) {
-      res.status(404).json({ success: false, message: "Usuário solicitante não encontrado" });
+      res
+        .status(404)
+        .json({
+          success: false,
+          message: "Usuário solicitante não encontrado",
+        });
       return;
     }
 
@@ -67,7 +87,7 @@ export async function deleteUser(req: AuthRequest, res: Response): Promise<void>
     }
 
     // Only ADMIN can delete other ADMINs
-    if (userToDelete.role === 'ADMIN' && requestingUser.role !== 'ADMIN') {
+    if (userToDelete.role === "ADMIN" && requestingUser.role !== "ADMIN") {
       res.status(403).json({
         success: false,
         message: "Apenas administradores podem excluir outros administradores.",
@@ -94,38 +114,6 @@ export async function deleteUser(req: AuthRequest, res: Response): Promise<void>
         data: { coordinatorId: null },
       });
 
-      // 4. For TCCs supervised by this user, we need to handle them
-      // Check if there are TCCs supervised by this user
-      const supervisedTccs = await tx.tCC.findMany({
-        where: { supervisorId: id },
-        select: { id: true, title: true },
-      });
-
-      if (supervisedTccs.length > 0) {
-        // Find another supervisor in the same organization to transfer TCCs
-        const alternativeSupervisor = await tx.user.findFirst({
-          where: {
-            organization_id: userToDelete.organization_id,
-            role: { in: ['ADMIN', 'SISTEM_MANAGER'] },
-            id: { not: id },
-            deleted_at: null,
-          },
-        });
-
-        if (!alternativeSupervisor) {
-          // No alternative supervisor found, cannot delete user
-          throw new Error(`Não é possível excluir o usuário pois ele é orientador de ${supervisedTccs.length} TCC(s) e não há outro supervisor disponível na organização para transferir a orientação.`);
-        }
-
-        // Transfer TCCs to alternative supervisor
-        await tx.tCC.updateMany({
-          where: { supervisorId: id },
-          data: { supervisorId: alternativeSupervisor.id },
-        });
-
-        console.log(`Transferred ${supervisedTccs.length} TCC(s) from ${userToDelete.email} to ${alternativeSupervisor.email}`);
-      }
-
       // 5. For files uploaded by this user, transfer to alternative user
       const uploadedFiles = await tx.file.findMany({
         where: { uploaded_by: id },
@@ -137,7 +125,7 @@ export async function deleteUser(req: AuthRequest, res: Response): Promise<void>
         const alternativeUploader = await tx.user.findFirst({
           where: {
             organization_id: userToDelete.organization_id,
-            role: { in: ['ADMIN', 'SISTEM_MANAGER'] },
+            role: { in: ["ADMIN", "SISTEM_MANAGER"] },
             id: { not: id },
             deleted_at: null,
           },
@@ -145,7 +133,9 @@ export async function deleteUser(req: AuthRequest, res: Response): Promise<void>
 
         if (!alternativeUploader) {
           // No alternative uploader found, cannot delete user
-          throw new Error(`Não é possível excluir o usuário pois ele enviou ${uploadedFiles.length} arquivo(s) e não há outro administrador disponível na organização para transferir a propriedade.`);
+          throw new Error(
+            `Não é possível excluir o usuário pois ele enviou ${uploadedFiles.length} arquivo(s) e não há outro administrador disponível na organização para transferir a propriedade.`
+          );
         }
 
         // Transfer files to alternative uploader
@@ -154,7 +144,9 @@ export async function deleteUser(req: AuthRequest, res: Response): Promise<void>
           data: { uploaded_by: alternativeUploader.id },
         });
 
-        console.log(`Transferred ${uploadedFiles.length} file(s) from ${userToDelete.email} to ${alternativeUploader.email}`);
+        console.log(
+          `Transferred ${uploadedFiles.length} file(s) from ${userToDelete.email} to ${alternativeUploader.email}`
+        );
       }
 
       // 6. Finally, delete the user
@@ -163,27 +155,35 @@ export async function deleteUser(req: AuthRequest, res: Response): Promise<void>
       });
     });
 
-    console.log(`User successfully deleted: ${userToDelete.email} (${userToDelete.id}) by ${requestingUser.email} (${requestingUser.id})`);
+    console.log(
+      `User successfully deleted: ${userToDelete.email} (${userToDelete.id}) by ${requestingUser.email} (${requestingUser.id})`
+    );
 
     res.status(200).json({
       success: true,
       message: "Usuário excluído com sucesso",
     });
-
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ success: false, message: "Dados de entrada inválidos.", errors: error.errors });
+      res
+        .status(400)
+        .json({
+          success: false,
+          message: "Dados de entrada inválidos.",
+          errors: error.errors,
+        });
       return;
     }
 
     console.error("Error deleting user:", error);
 
     // Check if it's our custom business logic error
-    if (error instanceof Error && (
-      error.message.includes('orientador de') ||
-      error.message.includes('enviou') ||
-      error.message.includes('não há outro')
-    )) {
+    if (
+      error instanceof Error &&
+      (error.message.includes("orientador de") ||
+        error.message.includes("enviou") ||
+        error.message.includes("não há outro"))
+    ) {
       res.status(400).json({
         success: false,
         message: error.message,
@@ -192,10 +192,14 @@ export async function deleteUser(req: AuthRequest, res: Response): Promise<void>
     }
 
     // Check if it's a foreign key constraint error
-    if (error instanceof Error && error.message.includes('foreign key constraint')) {
+    if (
+      error instanceof Error &&
+      error.message.includes("foreign key constraint")
+    ) {
       res.status(400).json({
         success: false,
-        message: "Não é possível excluir o usuário devido a dependências no sistema. Contate o administrador.",
+        message:
+          "Não é possível excluir o usuário devido a dependências no sistema. Contate o administrador.",
       });
       return;
     }
@@ -203,7 +207,7 @@ export async function deleteUser(req: AuthRequest, res: Response): Promise<void>
     res.status(500).json({
       success: false,
       message: "Erro interno ao excluir o usuário",
-      error: process.env.NODE_ENV === 'development' ? error : undefined,
+      error: process.env.NODE_ENV === "development" ? error : undefined,
     });
   }
 }

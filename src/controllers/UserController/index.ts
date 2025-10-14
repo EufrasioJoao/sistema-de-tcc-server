@@ -14,3 +14,4 @@ export * from "./GetAllUsersWithDetails";
 export * from "./GetUserByIdWithDetails";
 export * from "./SendResetCode";
 export * from "./SignUp";
+export * from "./GetCoordinators";

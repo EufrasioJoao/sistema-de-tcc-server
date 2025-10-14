@@ -65,20 +65,13 @@ export async function getAllTCCs(
       whereClause.OR = [
         { title: { contains: search as string } },
         { keywords: { contains: search as string } },
+        { supervisor: { contains: search as string } },
         {
           author: {
             OR: [
               { firstName: { contains: search as string } },
               { lastName: { contains: search as string } },
               { studentNumber: { contains: search as string } },
-            ],
-          },
-        },
-        {
-          supervisor: {
-            OR: [
-              { first_name: { contains: search as string } },
-              { last_name: { contains: search as string } },
             ],
           },
         },
@@ -105,7 +98,7 @@ export async function getAllTCCs(
     if (sortBy === "author") {
       orderBy.author = { firstName: sortOrder };
     } else if (sortBy === "supervisor") {
-      orderBy.supervisor = { first_name: sortOrder };
+      orderBy.supervisor = sortOrder;
     } else if (sortBy === "course") {
       orderBy.course = { name: sortOrder };
     } else {
@@ -130,14 +123,6 @@ export async function getAllTCCs(
             lastName: true,
             email: true,
             studentNumber: true,
-          },
-        },
-        supervisor: {
-          select: {
-            id: true,
-            first_name: true,
-            last_name: true,
-            email: true,
           },
         },
         course: {
@@ -635,14 +620,6 @@ export async function getTCCById(
             studentNumber: true,
           },
         },
-        supervisor: {
-          select: {
-            id: true,
-            first_name: true,
-            last_name: true,
-            email: true,
-          },
-        },
         course: {
           select: {
             id: true,
@@ -709,7 +686,7 @@ export async function updateTCC(
     keywords,
     type,
     authorId,
-    supervisorId,
+    supervisor,
     courseId,
     defenseRecordFileId,
   } = req.body;
@@ -751,7 +728,7 @@ export async function updateTCC(
     }
 
     // Verify all related entities belong to the user's organization
-    const [student, supervisor, course] = await Promise.all([
+    const [student, course] = await Promise.all([
       db.student.findFirst({
         where: {
           id: authorId,
@@ -761,13 +738,6 @@ export async function updateTCC(
             },
           },
           deletedAt: null,
-        },
-      }),
-      db.user.findFirst({
-        where: {
-          id: supervisorId,
-          organization_id: user?.organization_id,
-          deleted_at: null,
         },
       }),
       db.course.findFirst({
@@ -781,7 +751,7 @@ export async function updateTCC(
       }),
     ]);
 
-    if (!student || !supervisor || !course) {
+    if (!student || !course) {
       res.status(404).json({
         success: false,
         message: "Uma ou mais entidades relacionadas não foram encontradas",
@@ -816,7 +786,7 @@ export async function updateTCC(
         keywords,
         type: type as TccType,
         authorId,
-        supervisorId,
+        supervisor,
         courseId,
         defenseRecordFileId: defenseRecordFileId || null,
       },
@@ -828,14 +798,6 @@ export async function updateTCC(
             lastName: true,
             email: true,
             studentNumber: true,
-          },
-        },
-        supervisor: {
-          select: {
-            id: true,
-            first_name: true,
-            last_name: true,
-            email: true,
           },
         },
         course: {
@@ -989,20 +951,13 @@ export async function intelligentTCCSearch(
       OR: [
         { title: { contains: searchTerm } },
         { keywords: { contains: searchTerm } },
+        { supervisor: { contains: searchTerm } },
         {
           author: {
             OR: [
               { firstName: { contains: searchTerm } },
               { lastName: { contains: searchTerm } },
               { studentNumber: { contains: searchTerm } },
-            ],
-          },
-        },
-        {
-          supervisor: {
-            OR: [
-              { first_name: { contains: searchTerm } },
-              { last_name: { contains: searchTerm } },
             ],
           },
         },
@@ -1026,14 +981,6 @@ export async function intelligentTCCSearch(
             lastName: true,
             email: true,
             studentNumber: true,
-          },
-        },
-        supervisor: {
-          select: {
-            id: true,
-            first_name: true,
-            last_name: true,
-            email: true,
           },
         },
         course: {
@@ -1095,13 +1042,15 @@ export async function intelligentTCCSearch(
 
       // Supervisor match
       let supervisorMatched = false;
-      const supervisorFullName = `${tcc.supervisor.first_name} ${tcc.supervisor.last_name}`.toLowerCase();
-      queryWords.forEach((word: string) => {
-        if (supervisorFullName.includes(word)) {
-          relevanceScore += 5;
-          supervisorMatched = true;
-        }
-      });
+      if (tcc.supervisor) {
+        const supervisorName = tcc.supervisor.toLowerCase();
+        queryWords.forEach((word: string) => {
+          if (supervisorName.includes(word)) {
+            relevanceScore += 5;
+            supervisorMatched = true;
+          }
+        });
+      }
       if (supervisorMatched) matchedFields.push('Orientador');
 
       // Course match
@@ -1346,9 +1295,6 @@ export async function downloadTCCFile(
       return;
     }
 
-    // Generate presigned URL for download
-    const presignedUrl = await generatePresignedUrl(fileToDownload.path);
-
     // Log TCC download audit
     await AuditService.logTCCDownload(
       requestingUser.id,
@@ -1357,16 +1303,69 @@ export async function downloadTCCFile(
       fileType as 'main' | 'defense'
     );
 
-    res.status(200).json({
-      success: true,
-      downloadUrl: presignedUrl,
-      filename: fileToDownload.displayName,
-    });
+    // Stream file from S3
+    const BUCKET_NAME = env.AWS_S3_BUCKET_NAME;
+    const s3Key = fileToDownload.filename;
+
+    try {
+      const command = new GetObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: s3Key,
+      });
+
+      const s3 = new S3Client({
+        region: env.AWS_S3_BUCKET_REGION,
+        credentials: {
+          accessKeyId: env.AWS_ACCESS_KEY,
+          secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
+        },
+      });
+
+      const s3Response = await s3.send(command);
+
+      if (!s3Response.Body) {
+        res.status(404).json({
+          success: false,
+          message: "Conteúdo do arquivo não disponível",
+        });
+        return;
+      }
+
+      // Set appropriate headers for download
+      res.setHeader("Content-Type", s3Response.ContentType || "application/octet-stream");
+      res.setHeader("Content-Length", s3Response.ContentLength || 0);
+      res.setHeader("Content-Disposition", `attachment; filename="${fileToDownload.displayName}"`);
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Access-Control-Allow-Methods", "GET");
+
+      // Stream the file directly to the response
+      const stream = s3Response.Body as NodeJS.ReadableStream;
+      stream.pipe(res);
+
+      // Handle stream errors
+      stream.on("error", (error) => {
+        console.error("Stream error:", error);
+        if (!res.headersSent) {
+          res.status(500).json({
+            success: false,
+            message: "Erro ao fazer stream do arquivo",
+          });
+        }
+      });
+
+    } catch (s3Error: any) {
+      console.error(`S3 error for file ${fileToDownload.id}:`, s3Error);
+      res.status(500).json({
+        success: false,
+        message: "Falha ao recuperar arquivo do armazenamento",
+        error: s3Error.message,
+      });
+    }
   } catch (error) {
     console.error(`Error downloading TCC file ${id}:`, error);
     res.status(500).json({
       success: false,
-      message: "Erro ao gerar link de download",
+      message: "Erro ao fazer download do arquivo",
       error,
     });
   }

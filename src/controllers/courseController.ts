@@ -89,15 +89,6 @@ export async function getAllCourses(
       orderBy[sortBy] = sortOrder;
     }
 
-    // Debug logging
-    console.log("Search query:", {
-      search,
-      whereClause: JSON.stringify(whereClause, null, 2),
-      orderBy,
-      page,
-      limit,
-    });
-
     // Fetch courses with pagination
     const [courses, total] = await Promise.all([
       db.course.findMany({

@@ -108,6 +108,7 @@ import {
   resetPasswordWithCode,
   SignUp,
   registerUser,
+  getCoordinators,
 } from "../controllers/UserController";
 import { authMiddleware } from "../middlewares/authMiddleware";
 
@@ -296,6 +297,45 @@ router.get("/get-dashboard-data", authMiddleware, getDashboardData);
  *                   type: object
  */
 router.get("/", authMiddleware, getAllUsers);
+
+/**
+ * @swagger
+ * /api/users/coordinators:
+ *   get:
+ *     summary: Listar coordenadores
+ *     description: Retorna uma lista de usuários que podem ser coordenadores (ADMIN, SISTEM_MANAGER, COURSE_COORDENATOR)
+ *     tags: [Usuários]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de coordenadores retornada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 coordinators:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       first_name:
+ *                         type: string
+ *                       last_name:
+ *                         type: string
+ *                       email:
+ *                         type: string
+ *                       role:
+ *                         type: string
+ */
+router.get("/coordinators", authMiddleware, getCoordinators);
 
 /**
  * @swagger

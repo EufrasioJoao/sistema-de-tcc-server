@@ -25,7 +25,7 @@ export async function createTCCWithUpload(
 
   try {
     // Extract form data
-    const { title, year, keywords, type, authorId, supervisorId, courseId } =
+    const { title, year, keywords, type, authorId, supervisor, courseId } =
       req.body;
 
     // Get uploaded files from express-fileupload
@@ -56,7 +56,7 @@ export async function createTCCWithUpload(
     }
 
     // Verify all related entities belong to the user's organization
-    const [student, supervisor, course] = await Promise.all([
+    const [student, course] = await Promise.all([
       db.student.findFirst({
         where: {
           id: authorId,
@@ -66,13 +66,6 @@ export async function createTCCWithUpload(
             },
           },
           deletedAt: null,
-        },
-      }),
-      db.user.findFirst({
-        where: {
-          id: supervisorId,
-          organization_id: user.organization_id,
-          deleted_at: null,
         },
       }),
       db.course.findFirst({
@@ -90,14 +83,6 @@ export async function createTCCWithUpload(
       res.status(404).json({
         success: false,
         message: "Estudante não encontrado ou não pertence à sua organização",
-      });
-      return;
-    }
-
-    if (!supervisor) {
-      res.status(404).json({
-        success: false,
-        message: "Supervisor não encontrado ou não pertence à sua organização",
       });
       return;
     }
@@ -128,7 +113,7 @@ export async function createTCCWithUpload(
         keywords: keywords || null,
         type: type as TccType,
         authorId,
-        supervisorId,
+        supervisor,
         courseId,
         fileId: uploadResult.tccFile.id,
         defenseRecordFileId: uploadResult.defenseFile?.id || null,
@@ -141,14 +126,6 @@ export async function createTCCWithUpload(
             lastName: true,
             email: true,
             studentNumber: true,
-          },
-        },
-        supervisor: {
-          select: {
-            id: true,
-            first_name: true,
-            last_name: true,
-            email: true,
           },
         },
         course: {
@@ -182,15 +159,25 @@ export async function createTCCWithUpload(
       where: { id: user.organization_id },
       data: {
         UsedStorage: {
-          increment: (uploadResult.tccFile.size || 0) + (uploadResult.defenseFile?.size || 0)
-        }
-      }
-    })
+          increment:
+            (uploadResult.tccFile.size || 0) +
+            (uploadResult.defenseFile?.size || 0),
+        },
+      },
+    });
 
     // Log TCC upload audit
-    await AuditService.logTCCUpload(requestingUser.id, uploadResult.tccFile.id, newTCC.id);
+    await AuditService.logTCCUpload(
+      requestingUser.id,
+      uploadResult.tccFile.id,
+      newTCC.id
+    );
     if (uploadResult.defenseFile) {
-      await AuditService.logTCCUpload(requestingUser.id, uploadResult.defenseFile.id, newTCC.id);
+      await AuditService.logTCCUpload(
+        requestingUser.id,
+        uploadResult.defenseFile.id,
+        newTCC.id
+      );
     }
 
     res.status(201).json({
@@ -321,14 +308,6 @@ export async function updateTCCDefenseRecord(
             studentNumber: true,
           },
         },
-        supervisor: {
-          select: {
-            id: true,
-            first_name: true,
-            last_name: true,
-            email: true,
-          },
-        },
         course: {
           select: {
             id: true,
@@ -374,4 +353,3 @@ export async function updateTCCDefenseRecord(
     });
   }
 }
-

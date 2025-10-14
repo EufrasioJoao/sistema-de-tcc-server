@@ -35,7 +35,7 @@
  *               date:
  *                 type: string
  *                 format: date
- *   
+ *
  *   tags:
  *     - name: Relatórios
  *       description: Relatórios estatísticos e analíticos do sistema
@@ -44,14 +44,13 @@
 import { Router } from "express";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import {
-    getSystemStatistics,
-    getTccReports,
-    getUserActivityReports,
-    getStorageReports,
-    getCourseReports,
-    getAuthorReports,
-    getKeywordReports,
-    getThemeReports,
+  getSystemStatistics,
+  getTccReports,
+  getUserActivityReports,
+  getStorageReports,
+  getCourseReports,
+  getAuthorReports,
+  getKeywordReports,
 } from "../controllers/reportsController";
 
 const router = Router();
@@ -333,51 +332,5 @@ router.get("/authors", getAuthorReports);
  *                   type: object
  */
 router.get("/keywords", getKeywordReports);
-
-/**
- * @swagger
- * /api/reports/themes:
- *   get:
- *     summary: Relatório por temas
- *     description: Retorna análise dos temas mais abordados nos TCCs
- *     tags: [Relatórios]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Relatório por temas retornado com sucesso
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 themeAnalysis:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       theme:
- *                         type: string
- *                       count:
- *                         type: integer
- *                       relatedKeywords:
- *                         type: array
- *                         items:
- *                           type: string
- *                 duplicateThemes:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       theme:
- *                         type: string
- *                       tccs:
- *                         type: array
- *                         items:
- *                           type: object
- */
-router.get("/themes", getThemeReports);
-
-
 
 export default router;

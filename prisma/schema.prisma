@@ -62,7 +62,6 @@ model User {
 
   files           File[]
   file_access_history AccessHistory[]
-  supervised_tccs     TCC[]                  @relation("SupervisorTCCs")
   coordinated_courses Course[]               @relation("CourseCoordinator")
   search_history      SearchHistory[]        @relation("UserSearchHistory")
 
@@ -184,7 +183,6 @@ model TCC {
   keywords             String?
   type                 TccType
   authorId             String
-  supervisorId         String
   courseId             String
   fileId               String    @unique
   defenseRecordFileId  String?   @unique
@@ -193,13 +191,12 @@ model TCC {
   deletedAt            DateTime? 
 
   author              Student @relation(fields: [authorId], references: [id])
-  supervisor          User    @relation("SupervisorTCCs", fields: [supervisorId], references: [id])
+  supervisor          String?
   course              Course  @relation(fields: [courseId], references: [id])
   file                File    @relation("TCCFile", fields: [fileId], references: [id])
   defenseRecordFile   File?   @relation("DefenseRecordFile", fields: [defenseRecordFileId], references: [id])
 
   @@index([authorId])
-  @@index([supervisorId])
   @@index([courseId])
   @@map("tccs")
 }
